@@ -1,0 +1,132 @@
+.users-management {
+  padding-bottom: 2rem;
+}
+
+.create-btn {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 0.75rem 1.5rem !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.4) !important;
+  transition: all 0.3s ease !important;
+}
+
+.create-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6) !important;
+}
+
+.search-input {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+  border-radius: 12px !important;
+  padding: 0.75rem 1.25rem !important;
+  width: 300px !important;
+  transition: all 0.3s ease !important;
+}
+
+.search-input:focus {
+  border-color: #818cf8 !important;
+  box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.15) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.users-card {
+  background: rgba(255, 255, 255, 0.03) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border-radius: 20px !important;
+  overflow: hidden;
+}
+
+.users-table {
+  color: #f8fafc !important;
+}
+
+.users-table thead th {
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  padding: 1.25rem 1rem;
+  color: #94a3b8;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+.users-table tbody td {
+  padding: 1.25rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  vertical-align: middle;
+}
+
+.users-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02) !important;
+}
+
+.role-badge {
+  padding: 0.5rem 0.75rem !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  font-size: 0.75rem !important;
+}
+
+.action-btn {
+  font-size: 1.25rem;
+  padding: 0.25rem 0.5rem !important;
+  text-decoration: none !important;
+  transition: transform 0.2s ease;
+}
+
+.action-btn:hover {
+  transform: scale(1.2);
+}
+
+/* Modal Styles */
+.user-modal .modal-content {
+  background: #1e1e2f;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  color: #fff;
+}
+
+.user-modal .modal-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 1.5rem 2rem;
+}
+
+.user-modal .modal-body {
+  padding: 2rem;
+}
+
+.modal-input {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+  border-radius: 12px !important;
+  padding: 0.75rem 1rem !important;
+}
+
+.modal-input:focus {
+  border-color: #818cf8 !important;
+  box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.15) !important;
+}
+
+.modal-input option {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.modal-btn {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 0.75rem 2rem !important;
+  font-weight: 700 !important;
+}

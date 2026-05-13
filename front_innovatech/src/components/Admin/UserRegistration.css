@@ -1,0 +1,49 @@
+.registration-title {
+  font-size: 2.25rem;
+  letter-spacing: -0.5px;
+}
+
+.registration-card {
+  background: rgba(255, 255, 255, 0.03) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border-radius: 24px !important;
+}
+
+.registration-input {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #f8fafc !important;
+  border-radius: 12px !important;
+  padding: 0.75rem 1rem !important;
+  transition: all 0.3s ease !important;
+}
+
+.registration-input:focus {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: #818cf8 !important;
+  box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.15) !important;
+}
+
+.registration-input option {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.registration-btn {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  font-weight: 700 !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.3) !important;
+}
+
+.registration-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5) !important;
+}
+
+.registration-btn:active {
+  transform: translateY(1px);
+}
