@@ -1,23 +1,24 @@
 .dashboard-title {
   font-size: 2.25rem;
   font-weight: 800;
-  color: #f8fafc;
+  color: var(--text-h);
   margin-bottom: 0.5rem;
 }
 
 .dashboard-card {
-  background: rgba(255, 255, 255, 0.03) !important;
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  background: #ffffff !important;
+  border: 1px solid var(--border) !important;
   border-radius: 20px !important;
-  color: #f8fafc !important;
+  color: var(--text) !important;
+  box-shadow: var(--shadow) !important;
 }
 
 .stat-card {
-  background: rgba(255, 255, 255, 0.03) !important;
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  background: #ffffff !important;
+  border: 1px solid var(--border) !important;
   border-radius: 20px !important;
-  color: #f8fafc !important;
+  color: var(--text) !important;
+  box-shadow: var(--shadow) !important;
   transition: transform 0.3s ease;
 }
 
@@ -37,7 +38,7 @@
 }
 
 .activity-item {
-  border-color: rgba(255, 255, 255, 0.05) !important;
+  border-color: var(--border) !important;
 }
 
 .activity-dot {

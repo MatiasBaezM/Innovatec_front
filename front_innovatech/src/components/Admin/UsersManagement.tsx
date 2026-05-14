@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Modal, Form, Alert, Badge, Card } from 'react-bootstrap';
+import { Table, Button, Modal, Form, Alert, Badge, Card, InputGroup } from 'react-bootstrap';
+import { Pencil, Trash2, Search, Plus } from 'lucide-react';
 import { API_ENDPOINTS } from '../../config/api';
+import { formatRut, validateRut } from '../../utils/rutUtils';
 import './UsersManagement.css';
 
 interface Usuario {
@@ -15,6 +17,8 @@ const UsersManagement: React.FC = () => {
   const [users, setUsers] = useState<Usuario[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<number | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [currentUser, setCurrentUser] = useState<Usuario>({
     rut: '',
@@ -68,11 +72,18 @@ const UsersManagement: React.FC = () => {
   };
 
   const handleChange = (e: React.ChangeEvent<any>) => {
-    setCurrentUser({ ...currentUser, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setCurrentUser({ ...currentUser, [name]: name === 'rut' ? formatRut(value) : value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateRut(currentUser.rut)) {
+      setMessage({ type: 'danger', text: 'El RUT ingresado no es válido. Verifica que el formato sea correcto (ej. 12.345.678-9).' });
+      return;
+    }
+
     setLoading(true);
     const url = isEditing
       ? `${API_ENDPOINTS.AUTH.USERS}/${currentUser.id}`
@@ -98,14 +109,21 @@ const UsersManagement: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm('¿Estás seguro de eliminar este usuario?')) {
-      try {
-        await fetch(`${API_ENDPOINTS.AUTH.USERS}/${id}`, { method: 'DELETE' });
-        fetchUsers();
-      } catch (error) {
-        console.error('Error deleting user:', error);
-      }
+  const confirmDelete = (id: number) => {
+    setUserToDelete(id);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDelete = async () => {
+    if (userToDelete === null) return;
+    try {
+      await fetch(`${API_ENDPOINTS.AUTH.USERS}/${userToDelete}`, { method: 'DELETE' });
+      fetchUsers();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+    } finally {
+      setShowDeleteConfirm(false);
+      setUserToDelete(null);
     }
   };
 
@@ -122,19 +140,24 @@ const UsersManagement: React.FC = () => {
     <div className="users-management">
       <header className="d-flex justify-content-between align-items-center mb-5">
         <div>
-          <h1 className="text-white fw-bold">Gestión de Usuarios</h1>
-          <p className="text-white">Administra las cuentas y roles del sistema.</p>
+          <h1 className="text-dark fw-bold">Gestión de Usuarios</h1>
+          <p className="text-muted">Administra las cuentas y roles del sistema.</p>
         </div>
         <div className="d-flex gap-3 align-items-center">
-          <Form.Control
-            type="text"
-            placeholder="🔍 Buscar por nombre o RUT..."
-            className="search-input"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <Button className="create-btn" onClick={() => handleShow()}>
-            + Nuevo Usuario
+          <InputGroup>
+            <InputGroup.Text className="bg-white border-end-0 text-muted">
+              <Search size={18} />
+            </InputGroup.Text>
+            <Form.Control
+              type="text"
+              placeholder="Buscar por nombre o RUT..."
+              className="search-input border-start-0 ps-0"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </InputGroup>
+          <Button className="create-btn d-flex align-items-center gap-2" onClick={() => handleShow()}>
+            <Plus size={18} /> Nuevo Usuario
           </Button>
         </div>
       </header>
@@ -154,7 +177,7 @@ const UsersManagement: React.FC = () => {
             {filteredUsers.map((user) => (
               <tr key={user.id}>
                 <td className="text-muted">#{user.id}</td>
-                <td className="fw-500 text-white">{user.nombre}</td>
+                <td className="fw-500 text-dark">{user.nombre}</td>
                 <td className="text-muted">{user.rut}</td>
                 <td>
                   <Badge bg={getBadgeVariant(user.rol)} className="role-badge">
@@ -162,11 +185,11 @@ const UsersManagement: React.FC = () => {
                   </Badge>
                 </td>
                 <td className="text-end">
-                  <Button variant="link" className="action-btn edit-btn" onClick={() => handleShow(user)}>
-                    ✏️
+                  <Button variant="link" className="action-btn edit-btn" onClick={() => handleShow(user)} title="Editar">
+                    <Pencil size={18} />
                   </Button>
-                  <Button variant="link" className="action-btn delete-btn" onClick={() => handleDelete(user.id!)}>
-                    🗑️
+                  <Button variant="link" className="action-btn delete-btn" onClick={() => confirmDelete(user.id!)} title="Eliminar">
+                    <Trash2 size={18} />
                   </Button>
                 </td>
               </tr>
@@ -176,7 +199,7 @@ const UsersManagement: React.FC = () => {
       </Card>
 
       <Modal show={showModal} onHide={handleClose} centered className="user-modal">
-        <Modal.Header closeButton closeVariant="white">
+        <Modal.Header closeButton>
           <Modal.Title>{isEditing ? 'Editar Usuario' : 'Nuevo Usuario'}</Modal.Title>
         </Modal.Header>
         <Form onSubmit={handleSubmit}>
@@ -237,6 +260,24 @@ const UsersManagement: React.FC = () => {
             </Button>
           </Modal.Footer>
         </Form>
+      </Modal>
+
+      {/* Modal de Confirmación de Eliminación */}
+      <Modal show={showDeleteConfirm} onHide={() => setShowDeleteConfirm(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirmar Eliminación</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.</p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDeleteConfirm(false)}>
+            Cancelar
+          </Button>
+          <Button variant="danger" onClick={handleDelete}>
+            Eliminar
+          </Button>
+        </Modal.Footer>
       </Modal>
     </div>
   );

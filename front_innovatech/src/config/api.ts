@@ -14,10 +14,12 @@ export const API_ENDPOINTS = {
   },
   PROJECTS: {
     BASE: `${API_BASE_URL}/api/proyectos`,
+    ACTIVITIES: `${API_BASE_URL}/api/proyectos/actividades`,
   },
   RESOURCES: {
     WORKERS: `${API_BASE_URL}/api/trabajadores`,
     ASSIGNMENTS: `${API_BASE_URL}/api/asignaciones`,
+    TEAMS: `${API_BASE_URL}/api/equipos`,
   },
   ANALYTICS: {
     BASE: `${API_BASE_URL}/api/analiticas`,

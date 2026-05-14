@@ -1,21 +1,27 @@
 import React from 'react';
 import { Nav } from 'react-bootstrap';
 import { Link, useLocation } from 'react-router-dom';
+import { LayoutDashboard, Users, FolderKanban, TrendingUp, Settings, LogOut } from 'lucide-react';
 import './Sidebar.css';
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isHidden?: boolean;
+  toggleSidebar?: () => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isHidden, toggleSidebar }) => {
   const location = useLocation();
 
   const menuItems = [
-    { path: '/', label: 'Dashboard', icon: '📊' },
-    { path: '/usuarios', label: 'Usuarios', icon: '👥' },
-    { path: '/proyectos', label: 'Proyectos', icon: '📁' },
-    { path: '/analiticas', label: 'Analíticas', icon: '📈' },
-    { path: '/config', label: 'Configuración', icon: '⚙️' },
+    { path: '/', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
+    { path: '/usuarios', label: 'Usuarios', icon: <Users size={20} /> },
+    { path: '/proyectos', label: 'Proyectos', icon: <FolderKanban size={20} /> },
+    { path: '/analiticas', label: 'Analíticas', icon: <TrendingUp size={20} /> },
+    { path: '/config', label: 'Configuración', icon: <Settings size={20} /> },
   ];
 
   return (
-    <div className="sidebar">
+    <div className={`sidebar ${isHidden ? 'hidden' : ''}`}>
       <div className="sidebar-header">
         <h3 className="sidebar-logo">Innovatech</h3>
       </div>
@@ -36,10 +42,13 @@ const Sidebar: React.FC = () => {
       </Nav>
 
       <div className="sidebar-footer">
-        <Nav.Link as={Link} to="/login" className="sidebar-link logout">
-          <span className="sidebar-icon">🚪</span>
+        <button onClick={() => {
+          localStorage.removeItem('token');
+          window.location.href = '/login';
+        }} className="sidebar-link logout" style={{width: '100%', background: 'none', border: 'none', textAlign: 'left'}}>
+          <span className="sidebar-icon"><LogOut size={20} /></span>
           <span className="sidebar-label">Cerrar Sesión</span>
-        </Nav.Link>
+        </button>
       </div>
     </div>
   );

@@ -18,9 +18,9 @@
 }
 
 .search-input {
-  background: rgba(255, 255, 255, 0.05) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  color: #fff !important;
+  background: #f8fafc !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
   border-radius: 12px !important;
   padding: 0.75rem 1.25rem !important;
   width: 300px !important;
@@ -28,32 +28,32 @@
 }
 
 .search-input:focus {
-  border-color: #818cf8 !important;
-  box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.15) !important;
-  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 4px var(--accent-bg) !important;
+  background: #ffffff !important;
 }
 
 .search-input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
+  color: #94a3b8;
 }
 
 .users-card {
-  background: rgba(255, 255, 255, 0.03) !important;
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  background: #ffffff !important;
+  border: 1px solid var(--border) !important;
   border-radius: 20px !important;
   overflow: hidden;
+  box-shadow: var(--shadow) !important;
 }
 
 .users-table {
-  color: #f8fafc !important;
+  color: var(--text) !important;
 }
 
 .users-table thead th {
-  background: rgba(255, 255, 255, 0.02);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  background: #f8fafc;
+  border-bottom: 1px solid var(--border) !important;
   padding: 1.25rem 1rem;
-  color: #94a3b8;
+  color: #64748b;
   font-weight: 600;
   text-transform: uppercase;
   font-size: 0.75rem;
@@ -62,12 +62,12 @@
 
 .users-table tbody td {
   padding: 1.25rem 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border-bottom: 1px solid var(--border) !important;
   vertical-align: middle;
 }
 
 .users-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.02) !important;
+  background: #f1f5f9 !important;
 }
 
 .role-badge {
@@ -90,14 +90,14 @@
 
 /* Modal Styles */
 .user-modal .modal-content {
-  background: #1e1e2f;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  border: 1px solid var(--border);
   border-radius: 24px;
-  color: #fff;
+  color: var(--text);
 }
 
 .user-modal .modal-header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border);
   padding: 1.5rem 2rem;
 }
 
@@ -106,16 +106,16 @@
 }
 
 .modal-input {
-  background: rgba(255, 255, 255, 0.05) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  color: #fff !important;
+  background: #f8fafc !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
   border-radius: 12px !important;
   padding: 0.75rem 1rem !important;
 }
 
 .modal-input:focus {
-  border-color: #818cf8 !important;
-  box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.15) !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 4px var(--accent-bg) !important;
 }
 
 .modal-input option {

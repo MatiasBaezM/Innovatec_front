@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Form, Button } from 'react-bootstrap';
+import { Form, Button, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../../config/api';
+import { formatRut, validateRut } from '../../utils/rutUtils';
 import './Login.css';
 
 const Login: React.FC = () => {
@@ -14,6 +15,12 @@ const Login: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    
+    if (!validateRut(rut)) {
+      setError('El RUT ingresado no es válido. Verifica el formato.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -30,10 +37,10 @@ const Login: React.FC = () => {
       }
 
       const data = await response.json();
-      
+
       // Guardamos el token en localStorage
       localStorage.setItem('token', data.token);
-      
+
       // Redirigimos al inicio
       navigate('/');
     } catch (err: any) {
@@ -47,27 +54,27 @@ const Login: React.FC = () => {
     <div className="login-container">
       <div className="login-card">
         <h2 className="login-title">Innovatech</h2>
-        
-        {error && <div className="alert alert-danger mb-4 py-2 small">{error}</div>}
-        
+
+        {error && <Alert variant="danger" className="mb-4 py-2 small">{error}</Alert>}
+
         <Form onSubmit={handleLogin}>
           <Form.Group className="mb-4" controlId="formBasicRUT">
             <Form.Label className="login-label">RUT</Form.Label>
-            <Form.Control 
-              type="text" 
-              placeholder="Ej: 12.345.678-9" 
+            <Form.Control
+              type="text"
+              placeholder="Ej: 12.345.678-9"
               className="login-input"
               value={rut}
-              onChange={(e) => setRut(e.target.value)}
+              onChange={(e) => setRut(formatRut(e.target.value))}
               required
             />
           </Form.Group>
 
           <Form.Group className="mb-4" controlId="formBasicClave">
             <Form.Label className="login-label">Contraseña</Form.Label>
-            <Form.Control 
-              type="password" 
-              placeholder="Ingresa tu contraseña" 
+            <Form.Control
+              type="password"
+              placeholder="Ingresa tu contraseña"
               className="login-input"
               value={clave}
               onChange={(e) => setClave(e.target.value)}
@@ -80,8 +87,8 @@ const Login: React.FC = () => {
           </Button>
 
           <div className="text-center mt-3">
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="btn btn-link text-decoration-none text-light opacity-75"
               onClick={() => navigate('/')}
             >

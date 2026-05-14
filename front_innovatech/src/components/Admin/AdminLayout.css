@@ -1,7 +1,7 @@
 .admin-layout {
   display: flex;
   min-height: 100vh;
-  background: #0b0e14;
+  background: #f8fafc;
 }
 
 .admin-content {
@@ -9,6 +9,34 @@
   margin-left: 260px;
   padding: 2rem;
   transition: margin-left 0.3s ease;
+}
+
+.admin-layout.sidebar-hidden .admin-content {
+  margin-left: 0;
+}
+
+.admin-topbar {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.toggle-sidebar-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #0f172a;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-sidebar-btn:hover {
+  background-color: #e2e8f0;
 }
 
 .content-container {
@@ -20,5 +48,9 @@
   .admin-content {
     margin-left: 70px;
     padding: 1.5rem;
+  }
+  
+  .admin-layout.sidebar-hidden .admin-content {
+    margin-left: 0;
   }
 }

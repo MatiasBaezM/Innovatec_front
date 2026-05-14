@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Form, Button, Card, Row, Col, Alert } from 'react-bootstrap';
+import { formatRut, validateRut } from '../../utils/rutUtils';
 import { API_ENDPOINTS } from '../../config/api';
 import './UserRegistration.css';
 
@@ -14,19 +15,26 @@ const UserRegistration: React.FC = () => {
   const [message, setMessage] = useState({ type: '', text: '' });
 
   const handleChange = (e: React.ChangeEvent<any>) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: name === 'rut' ? formatRut(value) : value
     });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateRut(formData.rut)) {
+      setMessage({ type: 'danger', text: 'El RUT ingresado no es válido. Verifica que el formato sea correcto (ej. 12.345.678-9).' });
+      return;
+    }
+    
     setLoading(true);
     setMessage({ type: '', text: '' });
 
     try {
-      const response = await fetch(API_ENDPOINTS.AUTH.REGISTER, {
+      const response = await fetch('http://localhost:8080/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -39,10 +47,16 @@ const UserRegistration: React.FC = () => {
         throw new Error(errorData.message || 'Error al registrar usuario');
       }
 
+      await fetch(API_ENDPOINTS.PROJECTS.ACTIVITIES, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ titulo: `Nuevo usuario creado: ${formData.nombre} (${formData.rol})` })
+      }).catch(err => console.log('Error logging activity', err));
+
       setMessage({ type: 'success', text: 'Usuario registrado exitosamente' });
       setFormData({ rut: '', nombre: '', clave: '', rol: 'COLABORADOR' });
     } catch (err: any) {
-      setMessage({ type: 'danger', text: err.message || 'Error de conexiÃ³n con el servidor' });
+      setMessage({ type: 'danger', text: err.message || 'Error de conexión con el servidor' });
     } finally {
       setLoading(false);
     }
@@ -86,7 +100,7 @@ const UserRegistration: React.FC = () => {
                     <Form.Control
                       type="text"
                       name="nombre"
-                      placeholder="Juan PÃ©rez"
+                      placeholder="Juan Pérez"
                       value={formData.nombre}
                       onChange={handleChange}
                       className="registration-input"
@@ -99,7 +113,7 @@ const UserRegistration: React.FC = () => {
               <Row>
                 <Col md={6}>
                   <Form.Group className="mb-4">
-                    <Form.Label className="text-light small fw-bold">ContraseÃ±a</Form.Label>
+                    <Form.Label className="text-light small fw-bold">Contraseña</Form.Label>
                     <Form.Control
                       type="password"
                       name="clave"
@@ -113,7 +127,7 @@ const UserRegistration: React.FC = () => {
                 </Col>
                 <Col md={6}>
                   <Form.Group className="mb-4">
-                    <Form.Label className="text-black small fw-bold">Rol</Form.Label>
+                    <Form.Label className="text-light small fw-bold">Rol</Form.Label>
                     <Form.Select
                       name="rol"
                       value={formData.rol}

@@ -13,6 +13,10 @@
   border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+.sidebar.hidden {
+  transform: translateX(-100%);
+}
+
 .sidebar-header {
   padding: 2rem 1.5rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -42,6 +46,7 @@
   margin-bottom: 0.5rem;
   transition: all 0.2s ease;
   font-weight: 500;
+  text-decoration: none !important;
 }
 
 .sidebar-link:hover {
