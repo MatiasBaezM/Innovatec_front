@@ -1,0 +1,373 @@
+.task-board {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 64px - 4rem); /* viewport - navbar - padding */
+  min-height: 500px;
+}
+
+/* ── Header ── */
+.tb-header {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.tb-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tb-back-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tb-project-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.tb-project-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tb-project-name {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text-h);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tb-project-sub {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.tb-proyecto-estado {
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  padding: 0.4em 0.9em !important;
+  border-radius: 8px !important;
+  flex-shrink: 0;
+}
+
+/* ── Board ── */
+.tb-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Column ── */
+.tb-column {
+  background: #f1f5f9;
+  border-radius: 16px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+  /* border y transition se definen abajo junto al drop-target */
+}
+
+.tb-col-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.25rem;
+}
+
+.tb-col-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tb-col-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-h);
+  flex: 1;
+}
+
+.tb-col-count {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #94a3b8;
+  background: #e2e8f0;
+  padding: 0.15em 0.55em;
+  border-radius: 99px;
+}
+
+.tb-col-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.tb-col-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.tb-col-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.tb-col-empty {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.83rem;
+  padding: 1.5rem 0;
+}
+
+/* ── Column drop target ── */
+.tb-column {
+  border: 2px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.tb-column.drop-target {
+  background: #eef2ff;
+  border-color: rgba(99, 102, 241, 0.35);
+}
+
+.tb-col-empty.drop-hint {
+  color: #6366f1;
+  font-weight: 600;
+  background: rgba(99, 102, 241, 0.06);
+  border-radius: 10px;
+  padding: 2rem 0;
+}
+
+.tb-drop-zone {
+  border: 2px dashed rgba(99, 102, 241, 0.4);
+  border-radius: 10px;
+  padding: 0.75rem;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.04);
+  animation: tb-pulse 1s ease infinite;
+}
+
+@keyframes tb-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.55; }
+}
+
+/* ── Task card ── */
+.tb-task-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border: 1px solid transparent;
+  transition: box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+  cursor: grab;
+  user-select: none;
+}
+
+.tb-task-card:hover {
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.12);
+  transform: translateY(-2px);
+  border-color: rgba(99, 102, 241, 0.15);
+}
+
+.tb-task-card:active {
+  cursor: grabbing;
+}
+
+.tb-task-card.dragging {
+  opacity: 0.35;
+  transform: scale(0.97);
+  box-shadow: none;
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.tb-task-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+
+/* ── Drag handle ── */
+.tb-drag-handle {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 2px 4px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  cursor: grab;
+}
+
+.tb-task-card:hover .tb-drag-handle {
+  opacity: 1;
+}
+
+.tb-drag-handle span {
+  display: block;
+  width: 16px;
+  height: 2px;
+  background: #cbd5e1;
+  border-radius: 2px;
+}
+
+.tb-prioridad-badge {
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  padding: 0.25em 0.6em !important;
+  border-radius: 5px !important;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.tb-task-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-h);
+  margin: 0 0 0.35rem;
+  line-height: 1.35;
+}
+
+.tb-task-desc {
+  font-size: 0.78rem;
+  color: #64748b;
+  margin: 0 0 0.75rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+}
+
+.tb-task-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--border);
+  padding-top: 0.6rem;
+}
+
+.tb-asignado {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.tb-asignado-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tb-asignado-nombre {
+  font-size: 0.75rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tb-fecha {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+/* ── Add button ── */
+.tb-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  background: none;
+  color: #94a3b8;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tb-add-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(99, 102, 241, 0.04);
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .task-board {
+    height: auto;
+  }
+
+  .tb-board {
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+
+  .tb-col-body {
+    max-height: 400px;
+  }
+}
+
+@media (max-width: 576px) {
+  .tb-project-name {
+    font-size: 1.1rem;
+  }
+
+  .tb-back-btn span {
+    display: none;
+  }
+}

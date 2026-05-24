@@ -3,6 +3,7 @@ import { Form, Button, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../../config/api';
 import { formatRut, validateRut } from '../../utils/rutUtils';
+import { getRoleFromToken } from '../../context/AuthContext';
 import './Login.css';
 
 const Login: React.FC = () => {
@@ -15,7 +16,7 @@ const Login: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
+
     if (!validateRut(rut)) {
       setError('El RUT ingresado no es válido. Verifica el formato.');
       return;
@@ -41,8 +42,10 @@ const Login: React.FC = () => {
       // Guardamos el token en localStorage
       localStorage.setItem('token', data.token);
 
-      // Redirigimos al inicio
-      navigate('/');
+      // Redirigimos según el rol del usuario
+      const rol = getRoleFromToken();
+      const isAdmin = rol && ['ADMINISTRADOR', 'GESTOR_PROYECTOS'].includes(rol);
+      navigate(isAdmin ? '/' : '/user');
     } catch (err: any) {
       setError(err.message || 'Error al conectar con el servidor');
     } finally {
@@ -86,13 +89,35 @@ const Login: React.FC = () => {
             {loading ? 'Cargando...' : 'Iniciar Sesión'}
           </Button>
 
-          <div className="text-center mt-3">
+          <div className="text-center mt-3 d-flex flex-column gap-1">
             <button
               type="button"
               className="btn btn-link text-decoration-none text-light opacity-75"
-              onClick={() => navigate('/')}
+              onClick={() => {
+                localStorage.setItem('token', 'provisional-dev-token');
+                navigate('/');
+              }}
             >
-              Acceso Provisorio (Omitir)
+              Acceso Provisorio Admin
+            </button>
+            <button
+              type="button"
+              className="btn btn-link text-decoration-none text-light opacity-50"
+              onClick={() => {
+                const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
+                  .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+                const payload = btoa(JSON.stringify({
+                  sub: '12.345.678-9',
+                  nombre: 'Usuario Demo',
+                  rol: 'COLABORADOR',
+                  iat: Math.floor(Date.now() / 1000),
+                  exp: Math.floor(Date.now() / 1000) + 86400,
+                })).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+                localStorage.setItem('token', `${header}.${payload}.dev-signature`);
+                navigate('/user');
+              }}
+            >
+              Acceso Provisorio Usuario
             </button>
           </div>
         </Form>

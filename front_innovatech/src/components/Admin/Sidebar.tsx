@@ -9,7 +9,7 @@ interface SidebarProps {
   toggleSidebar?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isHidden, toggleSidebar }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isHidden, toggleSidebar: _toggleSidebar }) => {
   const location = useLocation();
 
   const menuItems = [

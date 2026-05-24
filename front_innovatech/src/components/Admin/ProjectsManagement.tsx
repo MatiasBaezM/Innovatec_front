@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Modal, Form, Alert, Badge, Card } from 'react-bootstrap';
-import { Pencil, Trash2, Plus, Users } from 'lucide-react';
+import { Pencil, Trash2, Plus, Users, ClipboardList, ChevronLeft } from 'lucide-react';
 import { API_ENDPOINTS } from '../../config/api';
+import API_BASE_URL from '../../config/api';
 import './ProjectsManagement.css';
 
 interface Proyecto {
@@ -12,6 +13,60 @@ interface Proyecto {
   fechaInicio: string;
 }
 
+interface Tarea {
+  id: number;
+  proyectoId: number;
+  titulo: string;
+  descripcion: string;
+  fechaCreacion: string;
+  fechaLimite: string;
+  asignadoId: number;
+  asignadoNombre: string;
+  prioridad: 'ALTA' | 'MEDIA' | 'BAJA';
+  estado: 'POR_HACER' | 'EN_PROGRESO' | 'COMPLETADO';
+}
+
+const PRIORIDAD_OPTS = [
+  { value: 'ALTA',  label: 'Alta' },
+  { value: 'MEDIA', label: 'Media' },
+  { value: 'BAJA',  label: 'Baja' },
+];
+
+const PRIORIDAD_CONFIG: Record<string, { color: string; bg: string }> = {
+  ALTA:  { color: '#b91c1c', bg: '#fee2e2' },
+  MEDIA: { color: '#92400e', bg: '#fef3c7' },
+  BAJA:  { color: '#065f46', bg: '#d1fae5' },
+};
+
+function tasksKey(proyectoId: number) {
+  return `innovatech_tasks_${proyectoId}`;
+}
+
+function loadLocalTasks(proyectoId: number): Tarea[] {
+  try {
+    return JSON.parse(localStorage.getItem(tasksKey(proyectoId)) || '[]');
+  } catch { return []; }
+}
+
+function saveLocalTasks(proyectoId: number, tareas: Tarea[]) {
+  localStorage.setItem(tasksKey(proyectoId), JSON.stringify(tareas));
+}
+
+const emptyTask = (proyectoId: number): Omit<Tarea, 'id'> => ({
+  proyectoId,
+  titulo: '',
+  descripcion: '',
+  fechaCreacion: new Date().toISOString().split('T')[0],
+  fechaLimite: '',
+  asignadoId: 0,
+  asignadoNombre: '',
+  prioridad: 'MEDIA',
+  estado: 'POR_HACER',
+});
+
+// ─────────────────────────────────────────────
+// Componente principal
+// ─────────────────────────────────────────────
 const ProjectsManagement: React.FC = () => {
   const [projects, setProjects] = useState<Proyecto[]>([]);
   const [showModal, setShowModal] = useState(false);
@@ -24,154 +79,52 @@ const ProjectsManagement: React.FC = () => {
   const [assignedTeam, setAssignedTeam] = useState<any[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [currentProject, setCurrentProject] = useState<Proyecto>({
-    nombre: '',
-    descripcion: '',
-    estado: 'INICIO',
-    fechaInicio: new Date().toISOString().split('T')[0]
+    nombre: '', descripcion: '', estado: 'INICIO',
+    fechaInicio: new Date().toISOString().split('T')[0],
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
-  // Simulación de datos para visualización inmediata si el backend no responde
+  // ── Task modal state ──
+  const [showTasksModal, setShowTasksModal] = useState(false);
+  const [tasksProject, setTasksProject] = useState<Proyecto | null>(null);
+  const [projectTasks, setProjectTasks] = useState<Tarea[]>([]);
+  const [showTaskForm, setShowTaskForm] = useState(false);
+  const [taskUsers, setTaskUsers] = useState<any[]>([]);
+  const [newTask, setNewTask] = useState<Omit<Tarea, 'id'>>(emptyTask(0));
+  const [taskLoading, setTaskLoading] = useState(false);
+  const [taskMessage, setTaskMessage] = useState({ type: '', text: '' });
+
   const mockProjects: Proyecto[] = [
     { id: 1, nombre: 'Sistema Innovatech', descripcion: 'Desarrollo de plataforma central', estado: 'EN_PROGRESO', fechaInicio: '2026-05-01' },
     { id: 2, nombre: 'App Móvil Clientes', descripcion: 'Aplicación para seguimiento de proyectos', estado: 'INICIO', fechaInicio: '2026-06-15' },
-    { id: 3, nombre: 'Migración Cloud', descripcion: 'Traslado de infraestructura a AWS', estado: 'FINALIZADO', fechaInicio: '2026-01-10' }
+    { id: 3, nombre: 'Migración Cloud', descripcion: 'Traslado de infraestructura a AWS', estado: 'FINALIZADO', fechaInicio: '2026-01-10' },
   ];
 
-  useEffect(() => {
-    fetchProjects();
-  }, []);
+  useEffect(() => { fetchProjects(); }, []);
 
   const fetchProjects = async () => {
     try {
       const response = await fetch(API_ENDPOINTS.PROJECTS.BASE);
-      if (response.ok) {
-        const data = await response.json();
-        setProjects(data);
-      } else {
-        setProjects(mockProjects);
-      }
-    } catch (error) {
-      console.error('Error fetching projects:', error);
+      setProjects(response.ok ? await response.json() : mockProjects);
+    } catch {
       setProjects(mockProjects);
     }
   };
 
+  // ─── Project CRUD ───────────────────────────
   const handleShow = (project?: Proyecto) => {
     if (project) {
       setIsEditing(true);
       setCurrentProject(project);
     } else {
       setIsEditing(false);
-      setCurrentProject({
-        nombre: '',
-        descripcion: '',
-        estado: 'INICIO',
-        fechaInicio: new Date().toISOString().split('T')[0]
-      });
+      setCurrentProject({ nombre: '', descripcion: '', estado: 'INICIO', fechaInicio: new Date().toISOString().split('T')[0] });
     }
     setShowModal(true);
   };
 
-  const handleClose = () => {
-    setShowModal(false);
-    setMessage({ type: '', text: '' });
-  };
-
-  const handleShowTeam = async (project: Proyecto) => {
-    setSelectedProjectForTeam(project);
-    setShowTeamModal(true);
-    setSelectedUserId('');
-    setAssignedTeam([]);
-    setMessage({ type: '', text: '' });
-    
-    // Fetch all available workers
-    try {
-      const res = await fetch(API_ENDPOINTS.RESOURCES.WORKERS);
-      if (res.ok) {
-        const users = await res.json();
-        setAvailableUsers(users);
-      } else {
-        setAvailableUsers([{ id: 1, nombre: 'Juan Pérez' }, { id: 2, nombre: 'María Silva' }]);
-      }
-    } catch {
-      setAvailableUsers([{ id: 1, nombre: 'Juan Pérez' }, { id: 2, nombre: 'María Silva' }]);
-    }
-
-    // Fetch existing assigned team for this project
-    try {
-      const resEquipo = await fetch(`${API_ENDPOINTS.RESOURCES.TEAMS}/proyecto/${project.id}`);
-      if (resEquipo.ok) {
-        const text = await resEquipo.text();
-        if (text) {
-          const equipoData = JSON.parse(text);
-          if (equipoData && equipoData.trabajadores && equipoData.trabajadores.length > 0) {
-            setAssignedTeam(equipoData.trabajadores);
-          }
-        }
-      }
-    } catch (e) {
-      console.log('No hay equipo asignado previamente o hubo un error');
-    }
-  };
-
-  const handleAddUserToTeamList = () => {
-    if (!selectedUserId) return;
-    const user = availableUsers.find(u => u.id.toString() === selectedUserId);
-    if (user && !assignedTeam.some(u => u.id === user.id)) {
-      setAssignedTeam([...assignedTeam, user]);
-    }
-    setSelectedUserId('');
-  };
-
-  const handleRemoveUserFromTeamList = (userId: string) => {
-    setAssignedTeam(assignedTeam.filter(u => u.id.toString() !== userId.toString()));
-  };
-
-  const handleAssignTeam = async () => {
-    if (!selectedProjectForTeam || assignedTeam.length === 0) {
-      setMessage({ type: 'danger', text: 'Debe agregar al menos un colaborador al equipo' });
-      return;
-    }
-    
-    setLoading(true);
-    try {
-      const payload = {
-        nombre: `Equipo de ${selectedProjectForTeam.nombre}`,
-        descripcion: `Equipo asignado para el proyecto: ${selectedProjectForTeam.nombre}`,
-        proyectoId: selectedProjectForTeam.id,
-        trabajadores: assignedTeam.map(user => ({ id: user.id }))
-      };
-
-      const response = await fetch(API_ENDPOINTS.RESOURCES.TEAMS, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) {
-        throw new Error('No se pudo guardar el equipo en la base de datos');
-      }
-
-      // Log the activity to Dashboard
-      await fetch(API_ENDPOINTS.PROJECTS.ACTIVITIES, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ titulo: `Equipo conformado: ${assignedTeam.length} colaboradores para "${selectedProjectForTeam.nombre}"` })
-      }).catch(err => console.log('Error logging activity', err));
-
-      setMessage({ type: 'success', text: 'Equipo guardado correctamente en la base de datos' });
-      setTimeout(() => {
-        setShowTeamModal(false);
-        setMessage({ type: '', text: '' });
-      }, 1500);
-    } catch (error: any) {
-      setMessage({ type: 'danger', text: error.message || 'Error al guardar el equipo' });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handleClose = () => { setShowModal(false); setMessage({ type: '', text: '' }); };
 
   const handleChange = (e: React.ChangeEvent<any>) => {
     setCurrentProject({ ...currentProject, [e.target.name]: e.target.value });
@@ -180,70 +133,201 @@ const ProjectsManagement: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const url = isEditing 
-      ? `${API_ENDPOINTS.PROJECTS.BASE}/${currentProject.id}` 
-      : API_ENDPOINTS.PROJECTS.BASE;
-    const method = isEditing ? 'PUT' : 'POST';
-
+    const url = isEditing ? `${API_ENDPOINTS.PROJECTS.BASE}/${currentProject.id}` : API_ENDPOINTS.PROJECTS.BASE;
     try {
-      // Nota: Esto fallará si el backend no está implementado aún
       const response = await fetch(url, {
-        method,
+        method: isEditing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(currentProject),
       });
-
-      if (!response.ok) throw new Error('Error en la operación (Backend no implementado)');
-
+      if (!response.ok) throw new Error('Error en la operación');
       if (!isEditing) {
         await fetch(API_ENDPOINTS.PROJECTS.ACTIVITIES, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ titulo: `Proyecto "${currentProject.nombre}" creado con éxito` })
-        }).catch(err => console.log('Error logging activity', err));
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ titulo: `Proyecto "${currentProject.nombre}" creado con éxito` }),
+        }).catch(() => {});
       }
-
       setMessage({ type: 'success', text: `Proyecto ${isEditing ? 'actualizado' : 'creado'} con éxito` });
       fetchProjects();
       setTimeout(handleClose, 1500);
     } catch (error: any) {
       setMessage({ type: 'danger', text: error.message });
-      // Para fines de demo, simulamos éxito en el estado local
-      if (isEditing) {
-        setProjects(projects.map(p => p.id === currentProject.id ? currentProject : p));
-      } else {
-        setProjects([...projects, { ...currentProject, id: projects.length + 1 }]);
-      }
+      if (isEditing) setProjects(projects.map(p => p.id === currentProject.id ? currentProject : p));
+      else setProjects([...projects, { ...currentProject, id: projects.length + 1 }]);
       setTimeout(handleClose, 1500);
     } finally {
       setLoading(false);
     }
   };
 
-  const confirmDelete = (id: number) => {
-    setProjectToDelete(id);
-    setShowDeleteConfirm(true);
-  };
-
+  const confirmDelete = (id: number) => { setProjectToDelete(id); setShowDeleteConfirm(true); };
   const handleDelete = async () => {
     if (projectToDelete === null) return;
+    try { await fetch(`${API_ENDPOINTS.PROJECTS.BASE}/${projectToDelete}`, { method: 'DELETE' }); fetchProjects(); }
+    catch { setProjects(projects.filter(p => p.id !== projectToDelete)); }
+    finally { setShowDeleteConfirm(false); setProjectToDelete(null); }
+  };
+
+  // ─── Team modal ─────────────────────────────
+  const handleShowTeam = async (project: Proyecto) => {
+    setSelectedProjectForTeam(project);
+    setShowTeamModal(true);
+    setSelectedUserId('');
+    setAssignedTeam([]);
+    setMessage({ type: '', text: '' });
     try {
-      await fetch(`${API_ENDPOINTS.PROJECTS.BASE}/${projectToDelete}`, { method: 'DELETE' });
-      fetchProjects();
-    } catch (error) {
-      setProjects(projects.filter(p => p.id !== projectToDelete));
-    } finally {
-      setShowDeleteConfirm(false);
-      setProjectToDelete(null);
+      const res = await fetch(API_ENDPOINTS.AUTH.USERS);
+      if (res.ok) {
+        const all = await res.json();
+        setAvailableUsers(all.filter((u: any) => u.rol === 'COLABORADOR'));
+      } else {
+        const r2 = await fetch(API_ENDPOINTS.RESOURCES.WORKERS);
+        setAvailableUsers(r2.ok ? await r2.json() : [{ id: 1, nombre: 'Juan Pérez' }, { id: 2, nombre: 'María Silva' }]);
+      }
+    } catch { setAvailableUsers([{ id: 1, nombre: 'Juan Pérez' }, { id: 2, nombre: 'María Silva' }]); }
+    try {
+      const r = await fetch(`${API_ENDPOINTS.RESOURCES.TEAMS}/proyecto/${project.id}`);
+      if (r.ok) {
+        const text = await r.text();
+        if (text) { const d = JSON.parse(text); if (d?.trabajadores?.length) setAssignedTeam(d.trabajadores); }
+      }
+    } catch {}
+  };
+
+  const handleAddUserToTeamList = () => {
+    if (!selectedUserId) return;
+    const user = availableUsers.find(u => u.id.toString() === selectedUserId);
+    if (user && !assignedTeam.some(u => u.id === user.id)) setAssignedTeam([...assignedTeam, user]);
+    setSelectedUserId('');
+  };
+
+  const handleRemoveUserFromTeamList = (userId: string) =>
+    setAssignedTeam(assignedTeam.filter(u => u.id.toString() !== userId.toString()));
+
+  const handleAssignTeam = async () => {
+    if (!selectedProjectForTeam || assignedTeam.length === 0) {
+      setMessage({ type: 'danger', text: 'Debe agregar al menos un colaborador al equipo' }); return;
     }
+    setLoading(true);
+    try {
+      const payload = {
+        nombre: `Equipo de ${selectedProjectForTeam.nombre}`,
+        descripcion: `Equipo asignado para el proyecto: ${selectedProjectForTeam.nombre}`,
+        proyectoId: selectedProjectForTeam.id,
+        trabajadores: assignedTeam.map(u => ({ id: u.id })),
+      };
+      const response = await fetch(API_ENDPOINTS.RESOURCES.TEAMS, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+      });
+      if (!response.ok) throw new Error('No se pudo guardar el equipo');
+      await fetch(API_ENDPOINTS.PROJECTS.ACTIVITIES, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ titulo: `Equipo conformado: ${assignedTeam.length} colaboradores para "${selectedProjectForTeam.nombre}"` }),
+      }).catch(() => {});
+      setMessage({ type: 'success', text: 'Equipo guardado correctamente' });
+      setTimeout(() => { setShowTeamModal(false); setMessage({ type: '', text: '' }); }, 1500);
+    } catch (error: any) {
+      setMessage({ type: 'danger', text: error.message || 'Error al guardar el equipo' });
+    } finally { setLoading(false); }
+  };
+
+  // ─── Task modal ─────────────────────────────
+  const handleShowTasks = async (project: Proyecto) => {
+    setTasksProject(project);
+    setShowTaskForm(false);
+    setTaskMessage({ type: '', text: '' });
+
+    // Cargar tareas existentes
+    const proyectoId = project.id!;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE_URL}/api/proyectos/${proyectoId}/tareas`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setProjectTasks(res.ok ? await res.json() : loadLocalTasks(proyectoId));
+    } catch {
+      setProjectTasks(loadLocalTasks(proyectoId));
+    }
+
+    // Cargar usuarios disponibles para asignar
+    try {
+      const res = await fetch(API_ENDPOINTS.AUTH.USERS);
+      if (res.ok) {
+        const all = await res.json();
+        setTaskUsers(all.filter((u: any) => ['COLABORADOR', 'ANALISTA'].includes(u.rol)));
+      } else {
+        setTaskUsers([
+          { id: 1, nombre: 'Juan Pérez' }, { id: 2, nombre: 'María Silva' },
+          { id: 3, nombre: 'Carlos Ruiz' }, { id: 4, nombre: 'Ana García' },
+        ]);
+      }
+    } catch {
+      setTaskUsers([
+        { id: 1, nombre: 'Juan Pérez' }, { id: 2, nombre: 'María Silva' },
+        { id: 3, nombre: 'Carlos Ruiz' }, { id: 4, nombre: 'Ana García' },
+      ]);
+    }
+
+    setNewTask(emptyTask(proyectoId));
+    setShowTasksModal(true);
+  };
+
+  const handleTaskChange = (e: React.ChangeEvent<any>) => {
+    const { name, value } = e.target;
+    if (name === 'asignadoId') {
+      const user = taskUsers.find(u => u.id.toString() === value);
+      setNewTask(prev => ({ ...prev, asignadoId: Number(value), asignadoNombre: user?.nombre ?? '' }));
+    } else {
+      setNewTask(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleCreateTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTask.asignadoId) {
+      setTaskMessage({ type: 'danger', text: 'Debes seleccionar un usuario a cargo.' }); return;
+    }
+    setTaskLoading(true);
+    setTaskMessage({ type: '', text: '' });
+
+    const tarea: Tarea = { ...newTask, id: Date.now(), estado: 'POR_HACER' };
+    const proyectoId = tasksProject!.id!;
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE_URL}/api/proyectos/${proyectoId}/tareas`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(tarea),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      // Guardar localmente como fallback
+      const existing = loadLocalTasks(proyectoId);
+      saveLocalTasks(proyectoId, [...existing, tarea]);
+    }
+
+    await fetch(API_ENDPOINTS.PROJECTS.ACTIVITIES, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ titulo: `Tarea "${tarea.titulo}" creada en "${tasksProject?.nombre}" y asignada a ${tarea.asignadoNombre}` }),
+    }).catch(() => {});
+
+    setProjectTasks(prev => [...prev, tarea]);
+    setTaskMessage({ type: 'success', text: `Tarea creada y asignada a ${tarea.asignadoNombre}.` });
+    setTimeout(() => {
+      setShowTaskForm(false);
+      setNewTask(emptyTask(proyectoId));
+      setTaskMessage({ type: '', text: '' });
+    }, 1200);
+    setTaskLoading(false);
   };
 
   const getStatusVariant = (estado: string) => {
     switch (estado) {
       case 'EN_PROGRESO': return 'warning';
-      case 'FINALIZADO': return 'success';
-      case 'INICIO': return 'info';
-      default: return 'secondary';
+      case 'FINALIZADO':  return 'success';
+      case 'INICIO':      return 'info';
+      default:            return 'secondary';
     }
   };
 
@@ -285,6 +369,9 @@ const ProjectsManagement: React.FC = () => {
                 </td>
                 <td className="text-muted">{project.fechaInicio}</td>
                 <td className="text-end">
+                  <Button variant="link" className="action-btn tasks-btn" onClick={() => handleShowTasks(project)} title="Gestionar Tareas">
+                    <ClipboardList size={18} />
+                  </Button>
                   <Button variant="link" className="action-btn team-btn" onClick={() => handleShowTeam(project)} title="Gestionar Equipo">
                     <Users size={18} />
                   </Button>
@@ -301,6 +388,7 @@ const ProjectsManagement: React.FC = () => {
         </Table>
       </Card>
 
+      {/* ── Modal Proyecto ── */}
       <Modal show={showModal} onHide={handleClose} centered className="project-modal">
         <Modal.Header closeButton>
           <Modal.Title>{isEditing ? 'Editar Proyecto' : 'Nuevo Proyecto'}</Modal.Title>
@@ -310,46 +398,19 @@ const ProjectsManagement: React.FC = () => {
             {message.text && <Alert variant={message.type}>{message.text}</Alert>}
             <Form.Group className="mb-3">
               <Form.Label>Nombre del Proyecto</Form.Label>
-              <Form.Control 
-                type="text" 
-                name="nombre" 
-                value={currentProject.nombre} 
-                onChange={handleChange} 
-                required 
-                className="modal-input"
-              />
+              <Form.Control type="text" name="nombre" value={currentProject.nombre} onChange={handleChange} required className="modal-input" />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Descripción</Form.Label>
-              <Form.Control 
-                as="textarea" 
-                rows={3}
-                name="descripcion" 
-                value={currentProject.descripcion} 
-                onChange={handleChange} 
-                required 
-                className="modal-input"
-              />
+              <Form.Control as="textarea" rows={3} name="descripcion" value={currentProject.descripcion} onChange={handleChange} required className="modal-input" />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Fecha de Inicio</Form.Label>
-              <Form.Control 
-                type="date" 
-                name="fechaInicio" 
-                value={currentProject.fechaInicio} 
-                onChange={handleChange} 
-                required 
-                className="modal-input"
-              />
+              <Form.Control type="date" name="fechaInicio" value={currentProject.fechaInicio} onChange={handleChange} required className="modal-input" />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Estado</Form.Label>
-              <Form.Select 
-                name="estado" 
-                value={currentProject.estado} 
-                onChange={handleChange} 
-                className="modal-input"
-              >
+              <Form.Select name="estado" value={currentProject.estado} onChange={handleChange} className="modal-input">
                 <option value="INICIO">Inicio</option>
                 <option value="EN_PROGRESO">En Progreso</option>
                 <option value="FINALIZADO">Finalizado</option>
@@ -365,25 +426,17 @@ const ProjectsManagement: React.FC = () => {
         </Form>
       </Modal>
 
-      {/* Modal de Confirmación de Eliminación */}
+      {/* ── Modal Eliminar ── */}
       <Modal show={showDeleteConfirm} onHide={() => setShowDeleteConfirm(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Confirmar Eliminación</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <p>¿Estás seguro de que deseas eliminar este proyecto? Esta acción no se puede deshacer.</p>
-        </Modal.Body>
+        <Modal.Header closeButton><Modal.Title>Confirmar Eliminación</Modal.Title></Modal.Header>
+        <Modal.Body><p>¿Estás seguro de que deseas eliminar este proyecto? Esta acción no se puede deshacer.</p></Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDeleteConfirm(false)}>
-            Cancelar
-          </Button>
-          <Button variant="danger" onClick={handleDelete}>
-            Eliminar
-          </Button>
+          <Button variant="secondary" onClick={() => setShowDeleteConfirm(false)}>Cancelar</Button>
+          <Button variant="danger" onClick={handleDelete}>Eliminar</Button>
         </Modal.Footer>
       </Modal>
 
-      {/* Modal de Equipo */}
+      {/* ── Modal Equipo ── */}
       <Modal show={showTeamModal} onHide={() => setShowTeamModal(false)} centered className="project-modal">
         <Modal.Header closeButton>
           <Modal.Title>Equipo: {selectedProjectForTeam?.nombre}</Modal.Title>
@@ -393,32 +446,25 @@ const ProjectsManagement: React.FC = () => {
           <Form.Group className="mb-4">
             <Form.Label>Seleccionar Colaborador</Form.Label>
             <div className="d-flex gap-2">
-              <Form.Select 
-                value={selectedUserId}
-                onChange={(e) => setSelectedUserId(e.target.value)}
-                className="modal-input"
-              >
+              <Form.Select value={selectedUserId} onChange={e => setSelectedUserId(e.target.value)} className="modal-input">
                 <option value="">Seleccione un usuario...</option>
-                {availableUsers.map(u => (
-                  <option key={u.id} value={u.id}>{u.nombre}</option>
-                ))}
+                {availableUsers.map(u => <option key={u.id} value={u.id}>{u.nombre}</option>)}
               </Form.Select>
-              <Button variant="primary" onClick={handleAddUserToTeamList} disabled={!selectedUserId} className="d-flex align-items-center justify-content-center" style={{borderRadius: '12px'}}>
+              <Button variant="primary" onClick={handleAddUserToTeamList} disabled={!selectedUserId} className="d-flex align-items-center justify-content-center" style={{ borderRadius: '12px' }}>
                 <Plus size={20} />
               </Button>
             </div>
           </Form.Group>
-
           <div className="team-list mt-4">
             <Form.Label>Colaboradores Asignados ({assignedTeam.length})</Form.Label>
             {assignedTeam.length === 0 ? (
               <div className="text-muted small p-3 bg-light rounded text-center">No hay colaboradores agregados aún.</div>
             ) : (
-              <div className="d-flex flex-column gap-2 max-h-40 overflow-auto">
+              <div className="d-flex flex-column gap-2">
                 {assignedTeam.map(user => (
                   <div key={user.id} className="d-flex justify-content-between align-items-center p-2 border rounded bg-white shadow-sm">
                     <div className="d-flex align-items-center gap-2">
-                      <div className="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style={{width: '32px', height: '32px', fontWeight: 'bold'}}>
+                      <div className="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style={{ width: '32px', height: '32px', fontWeight: 'bold' }}>
                         {user.nombre.charAt(0).toUpperCase()}
                       </div>
                       <span className="fw-500">{user.nombre}</span>
@@ -437,6 +483,143 @@ const ProjectsManagement: React.FC = () => {
           <Button variant="primary" onClick={handleAssignTeam} disabled={loading || assignedTeam.length === 0} className="modal-btn">
             {loading ? 'Guardando...' : 'Guardar Equipo'}
           </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* ── Modal Tareas ── */}
+      <Modal show={showTasksModal} onHide={() => { setShowTasksModal(false); setShowTaskForm(false); }} centered size="lg" className="project-modal">
+        <Modal.Header closeButton>
+          <Modal.Title className="d-flex align-items-center gap-2">
+            {showTaskForm && (
+              <Button variant="link" className="p-0 me-1 text-secondary" onClick={() => { setShowTaskForm(false); setTaskMessage({ type: '', text: '' }); }}>
+                <ChevronLeft size={22} />
+              </Button>
+            )}
+            <ClipboardList size={20} />
+            {showTaskForm ? 'Nueva Tarea' : `Tareas: ${tasksProject?.nombre}`}
+          </Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          {taskMessage.text && <Alert variant={taskMessage.type} className="mb-3">{taskMessage.text}</Alert>}
+
+          {/* ── Vista: lista de tareas ── */}
+          {!showTaskForm && (
+            <>
+              {projectTasks.length === 0 ? (
+                <div className="text-center py-4 text-muted">
+                  <ClipboardList size={36} className="mb-2 opacity-25" />
+                  <p className="mb-0">Este proyecto no tiene tareas aún.</p>
+                </div>
+              ) : (
+                <div className="task-admin-list">
+                  {projectTasks.map(t => {
+                    const p = PRIORIDAD_CONFIG[t.prioridad];
+                    return (
+                      <div key={t.id} className="task-admin-item">
+                        <div className="task-admin-left">
+                          <div className="d-flex align-items-center gap-2 mb-1">
+                            <span className="task-admin-title">{t.titulo}</span>
+                            <Badge style={{ backgroundColor: p.bg, color: p.color, fontSize: '0.7rem', fontWeight: 700 }}>
+                              {t.prioridad}
+                            </Badge>
+                          </div>
+                          <p className="task-admin-desc">{t.descripcion}</p>
+                          <div className="task-admin-meta">
+                            <span>👤 {t.asignadoNombre || '—'}</span>
+                            <span>📅 Límite: {t.fechaLimite || '—'}</span>
+                          </div>
+                        </div>
+                        <Badge bg={t.estado === 'POR_HACER' ? 'secondary' : t.estado === 'EN_PROGRESO' ? 'warning' : 'success'} className="task-admin-estado">
+                          {t.estado === 'POR_HACER' ? 'Por Hacer' : t.estado === 'EN_PROGRESO' ? 'En Progreso' : 'Completado'}
+                        </Badge>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ── Vista: formulario nueva tarea ── */}
+          {showTaskForm && (
+            <Form id="task-form" onSubmit={handleCreateTask}>
+              <div className="row g-3">
+                <div className="col-12">
+                  <Form.Group>
+                    <Form.Label>Nombre de la tarea <span className="text-danger">*</span></Form.Label>
+                    <Form.Control
+                      type="text" name="titulo" value={newTask.titulo}
+                      onChange={handleTaskChange} required className="modal-input"
+                      placeholder="Ej: Diseñar interfaz principal"
+                    />
+                  </Form.Group>
+                </div>
+                <div className="col-12">
+                  <Form.Group>
+                    <Form.Label>Descripción <span className="text-danger">*</span></Form.Label>
+                    <Form.Control
+                      as="textarea" rows={3} name="descripcion" value={newTask.descripcion}
+                      onChange={handleTaskChange} required className="modal-input"
+                      placeholder="Describe qué se debe realizar..."
+                    />
+                  </Form.Group>
+                </div>
+                <div className="col-sm-6">
+                  <Form.Group>
+                    <Form.Label>Fecha de creación</Form.Label>
+                    <Form.Control
+                      type="date" name="fechaCreacion" value={newTask.fechaCreacion}
+                      onChange={handleTaskChange} className="modal-input" readOnly
+                    />
+                  </Form.Group>
+                </div>
+                <div className="col-sm-6">
+                  <Form.Group>
+                    <Form.Label>Fecha límite <span className="text-danger">*</span></Form.Label>
+                    <Form.Control
+                      type="date" name="fechaLimite" value={newTask.fechaLimite}
+                      onChange={handleTaskChange} required className="modal-input"
+                      min={newTask.fechaCreacion}
+                    />
+                  </Form.Group>
+                </div>
+                <div className="col-sm-6">
+                  <Form.Group>
+                    <Form.Label>Prioridad</Form.Label>
+                    <Form.Select name="prioridad" value={newTask.prioridad} onChange={handleTaskChange} className="modal-input">
+                      {PRIORIDAD_OPTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    </Form.Select>
+                  </Form.Group>
+                </div>
+                <div className="col-sm-6">
+                  <Form.Group>
+                    <Form.Label>Usuario a cargo <span className="text-danger">*</span></Form.Label>
+                    <Form.Select
+                      name="asignadoId" value={newTask.asignadoId || ''}
+                      onChange={handleTaskChange} required className="modal-input"
+                    >
+                      <option value="">Seleccionar usuario...</option>
+                      {taskUsers.map(u => <option key={u.id} value={u.id}>{u.nombre}</option>)}
+                    </Form.Select>
+                  </Form.Group>
+                </div>
+              </div>
+            </Form>
+          )}
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => { setShowTasksModal(false); setShowTaskForm(false); }}>Cerrar</Button>
+          {!showTaskForm ? (
+            <Button variant="primary" className="modal-btn d-flex align-items-center gap-2" onClick={() => { setShowTaskForm(true); setTaskMessage({ type: '', text: '' }); }}>
+              <Plus size={16} /> Nueva Tarea
+            </Button>
+          ) : (
+            <Button variant="primary" type="submit" form="task-form" disabled={taskLoading} className="modal-btn">
+              {taskLoading ? 'Creando...' : 'Crear Tarea'}
+            </Button>
+          )}
         </Modal.Footer>
       </Modal>
     </div>

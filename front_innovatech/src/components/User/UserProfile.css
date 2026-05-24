@@ -1,0 +1,149 @@
+.user-profile {
+  padding-bottom: 2rem;
+}
+
+/* ── Header ── */
+.uprof-header {
+  margin-bottom: 1.75rem;
+}
+
+.uprof-title {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--text-h);
+  margin: 0 0 0.2rem;
+}
+
+.uprof-subtitle {
+  color: #64748b;
+  font-size: 0.92rem;
+  margin: 0;
+}
+
+/* ── Card ── */
+.uprof-card {
+  border-radius: 18px !important;
+  background: #ffffff !important;
+}
+
+/* ── Avatar ── */
+.uprof-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #ffffff;
+  font-size: 1.75rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+}
+
+.uprof-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-h);
+  margin-bottom: 0.5rem;
+}
+
+.uprof-rol-badge {
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  padding: 0.35em 0.8em !important;
+  border-radius: 8px !important;
+}
+
+.uprof-divider {
+  border-color: var(--border);
+  margin: 1.25rem 0;
+}
+
+/* ── Info list ── */
+.uprof-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  text-align: left;
+}
+
+.uprof-info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.uprof-info-icon {
+  color: #94a3b8;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.uprof-info-label {
+  display: block;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-bottom: 0.05rem;
+}
+
+.uprof-info-value {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+/* ── Activity ── */
+.uprof-activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.uprof-activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+
+.uprof-activity-item:last-child {
+  border-bottom: none;
+}
+
+.uprof-timeline-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #6366f1;
+  flex-shrink: 0;
+  margin-top: 5px;
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.4);
+}
+
+.uprof-activity-body {
+  flex: 1;
+}
+
+.uprof-activity-title {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text);
+  margin: 0 0 0.15rem;
+}
+
+.uprof-activity-date {
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.uprof-empty {
+  text-align: center;
+  color: #94a3b8;
+  padding: 2.5rem 0;
+  font-size: 0.9rem;
+}

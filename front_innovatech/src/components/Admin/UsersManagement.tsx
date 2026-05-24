@@ -45,12 +45,11 @@ const UsersManagement: React.FC = () => {
       // Fallback a datos de prueba si falla la API
       setUsers([
         { id: 1, nombre: 'Admin Innovatech', rut: '11.111.111-1', rol: 'ADMINISTRADOR' },
-        { id: 2, nombre: 'Juan Pérez', rut: '12.345.678-9', rol: 'COLABORADOR' }
       ]);
     }
   };
 
-  const filteredUsers = users.filter(user => 
+  const filteredUsers = users.filter(user =>
     user.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.rut.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -78,7 +77,7 @@ const UsersManagement: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateRut(currentUser.rut)) {
       setMessage({ type: 'danger', text: 'El RUT ingresado no es válido. Verifica que el formato sea correcto (ej. 12.345.678-9).' });
       return;

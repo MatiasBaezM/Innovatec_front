@@ -57,6 +57,60 @@
   font-size: 0.75rem !important;
 }
 
+/* Action buttons */
+.action-btn { padding: 0.3rem 0.5rem !important; }
+.tasks-btn  { color: #6366f1 !important; }
+.tasks-btn:hover { color: #4338ca !important; }
+
+/* Task admin list */
+.task-admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.task-admin-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.task-admin-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-h);
+}
+
+.task-admin-desc {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin: 0 0 0.4rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.task-admin-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.task-admin-estado {
+  font-size: 0.72rem !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 /* Modal Styles */
 .project-modal .modal-content {
   background: #ffffff;

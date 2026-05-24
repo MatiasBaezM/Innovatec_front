@@ -4,6 +4,12 @@ import AdminLayout from './components/Admin/AdminLayout'
 import Dashboard from './components/Admin/Dashboard'
 import UsersManagement from './components/Admin/UsersManagement'
 import ProjectsManagement from './components/Admin/ProjectsManagement'
+import UserLayout from './components/User/UserLayout'
+import UserDashboard from './components/User/UserDashboard'
+import UserProjects from './components/User/UserProjects'
+import UserProfile from './components/User/UserProfile'
+import TaskBoard from './components/User/TaskBoard'
+import { useAuth } from './context/AuthContext'
 import './App.css'
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -11,8 +17,23 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
 
   if (!token) {
-    // Redirigir al login si no hay token, guardando la ruta de origen
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
+};
+
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAdmin } = useAuth();
+  const token = localStorage.getItem('token');
+  const location = useLocation();
+
+  if (!token) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (!isAdmin()) {
+    return <Navigate to="/user" replace />;
   }
 
   return <>{children}</>;
@@ -22,37 +43,81 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route 
-        path="/" 
+
+      {/* Rutas de administrador */}
+      <Route
+        path="/"
         element={
-          <ProtectedRoute>
+          <AdminRoute>
             <AdminLayout>
               <Dashboard />
             </AdminLayout>
-          </ProtectedRoute>
-        } 
+          </AdminRoute>
+        }
       />
-      <Route 
-        path="/usuarios" 
+      <Route
+        path="/usuarios"
         element={
-          <ProtectedRoute>
+          <AdminRoute>
             <AdminLayout>
               <UsersManagement />
             </AdminLayout>
-          </ProtectedRoute>
-        } 
+          </AdminRoute>
+        }
       />
-      <Route 
-        path="/proyectos" 
+      <Route
+        path="/proyectos"
         element={
-          <ProtectedRoute>
+          <AdminRoute>
             <AdminLayout>
               <ProjectsManagement />
             </AdminLayout>
-          </ProtectedRoute>
-        } 
+          </AdminRoute>
+        }
       />
-      {/* Redireccionar a la raíz por defecto, que a su vez redirigirá al login si no hay sesión */}
+
+      {/* Rutas de usuario normal */}
+      <Route
+        path="/user"
+        element={
+          <ProtectedRoute>
+            <UserLayout>
+              <UserDashboard />
+            </UserLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/user/proyectos"
+        element={
+          <ProtectedRoute>
+            <UserLayout>
+              <UserProjects />
+            </UserLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/user/perfil"
+        element={
+          <ProtectedRoute>
+            <UserLayout>
+              <UserProfile />
+            </UserLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/user/proyectos/:id"
+        element={
+          <ProtectedRoute>
+            <UserLayout>
+              <TaskBoard />
+            </UserLayout>
+          </ProtectedRoute>
+        }
+      />
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
