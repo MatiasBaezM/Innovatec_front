@@ -4,6 +4,8 @@ import AdminLayout from './components/Admin/AdminLayout'
 import Dashboard from './components/Admin/Dashboard'
 import UsersManagement from './components/Admin/UsersManagement'
 import ProjectsManagement from './components/Admin/ProjectsManagement'
+import Analytics from './components/Admin/Analytics'
+import Config from './components/Admin/Config'
 import UserLayout from './components/User/UserLayout'
 import UserDashboard from './components/User/UserDashboard'
 import UserProjects from './components/User/UserProjects'
@@ -71,6 +73,26 @@ function App() {
           <AdminRoute>
             <AdminLayout>
               <ProjectsManagement />
+            </AdminLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/analiticas"
+        element={
+          <AdminRoute>
+            <AdminLayout>
+              <Analytics />
+            </AdminLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/config"
+        element={
+          <AdminRoute>
+            <AdminLayout>
+              <Config />
             </AdminLayout>
           </AdminRoute>
         }

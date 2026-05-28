@@ -1,0 +1,57 @@
+.analytics-page {
+  padding-bottom: 2rem;
+}
+
+/* ── Export button ── */
+.analytics-export-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 0.65rem 1.25rem !important;
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35) !important;
+  transition: all 0.25s ease !important;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+}
+
+.analytics-export-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5) !important;
+}
+
+.analytics-export-btn:disabled {
+  opacity: 0.5;
+}
+
+/* ── Summary list ── */
+.analytics-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.analytics-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.analytics-summary-row:last-child {
+  border-bottom: none;
+}
+
+.analytics-summary-label {
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.analytics-summary-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-h, #0f172a);
+}

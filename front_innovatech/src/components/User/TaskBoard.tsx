@@ -1,24 +1,31 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Badge } from 'react-bootstrap';
-import { ArrowLeft, FolderKanban, Plus } from 'lucide-react';
-import API_BASE_URL from '../../config/api';
+import { ArrowLeft, FolderKanban } from 'lucide-react';
+import API_BASE_URL, { API_ENDPOINTS } from '../../config/api';
 import './TaskBoard.css';
 
 interface Tarea {
   id: number;
+  proyectoId?: number;
   titulo: string;
   descripcion: string;
   estado: 'POR_HACER' | 'EN_PROGRESO' | 'COMPLETADO';
   prioridad: 'ALTA' | 'MEDIA' | 'BAJA';
-  asignado?: string;
-  fecha?: string;
+  asignadoId?: number;
+  asignadoNombre?: string;
+  fechaLimite?: string;
 }
 
 interface Proyecto {
   id: number;
   nombre: string;
   estado: string;
+}
+
+interface UsuarioActual {
+  id: number;
+  nombre: string;
 }
 
 const PRIORIDAD_CONFIG = {
@@ -38,26 +45,6 @@ const COLUMNAS: { key: Tarea['estado']; label: string; color: string }[] = [
   { key: 'EN_PROGRESO', label: 'En Progreso', color: '#6366f1' },
   { key: 'COMPLETADO',  label: 'Completado',  color: '#10b981' },
 ];
-
-function loadLocalTasks(proyectoId: number): Tarea[] {
-  try {
-    const stored = JSON.parse(localStorage.getItem(`innovatech_tasks_${proyectoId}`) || '[]');
-    return stored.length > 0 ? stored : generarMockTareas(proyectoId);
-  } catch { return generarMockTareas(proyectoId); }
-}
-
-function generarMockTareas(proyectoId: number): Tarea[] {
-  const base = proyectoId * 10;
-  return [
-    { id: base + 1, titulo: 'Relevamiento de requerimientos', descripcion: 'Reunión con stakeholders para definir alcance.',      estado: 'COMPLETADO',  prioridad: 'ALTA',  asignado: 'Ana G.',   fecha: '2026-05-10' },
-    { id: base + 2, titulo: 'Diseño de arquitectura',         descripcion: 'Definir la arquitectura técnica del sistema.',        estado: 'COMPLETADO',  prioridad: 'ALTA',  asignado: 'Luis M.',  fecha: '2026-05-12' },
-    { id: base + 3, titulo: 'Diseño de interfaces',           descripcion: 'Crear wireframes y prototipos en Figma.',             estado: 'EN_PROGRESO', prioridad: 'MEDIA', asignado: 'Carla R.', fecha: '2026-05-18' },
-    { id: base + 4, titulo: 'Desarrollo módulo principal',    descripcion: 'Implementar la lógica central del proyecto.',         estado: 'EN_PROGRESO', prioridad: 'ALTA',  asignado: 'Pedro S.', fecha: '2026-05-20' },
-    { id: base + 5, titulo: 'Configurar entorno CI/CD',       descripcion: 'Pipelines de integración y despliegue continuo.',     estado: 'POR_HACER',   prioridad: 'MEDIA', asignado: 'Luis M.',  fecha: '2026-05-25' },
-    { id: base + 6, titulo: 'Pruebas de integración',         descripcion: 'Verificar la correcta integración entre módulos.',    estado: 'POR_HACER',   prioridad: 'ALTA',  asignado: 'Ana G.',   fecha: '2026-05-28' },
-    { id: base + 7, titulo: 'Documentación técnica',          descripcion: 'Redactar la documentación del sistema.',              estado: 'POR_HACER',   prioridad: 'BAJA',  asignado: 'Carla R.', fecha: '2026-06-01' },
-  ];
-}
 
 function getInitials(nombre: string) {
   return nombre.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
@@ -90,15 +77,15 @@ const TareaCard: React.FC<TareaCardProps> = ({ tarea, isDragging, onDragStart, o
       <p className="tb-task-title">{tarea.titulo}</p>
       <p className="tb-task-desc">{tarea.descripcion}</p>
       <div className="tb-task-footer">
-        {tarea.asignado && (
+        {tarea.asignadoNombre && (
           <div className="tb-asignado">
-            <div className="tb-asignado-avatar">{getInitials(tarea.asignado)}</div>
-            <span className="tb-asignado-nombre">{tarea.asignado}</span>
+            <div className="tb-asignado-avatar">{getInitials(tarea.asignadoNombre)}</div>
+            <span className="tb-asignado-nombre">{tarea.asignadoNombre}</span>
           </div>
         )}
-        {tarea.fecha && (
+        {tarea.fechaLimite && (
           <span className="tb-fecha">
-            {new Date(tarea.fecha).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}
+            {new Date(tarea.fechaLimite).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}
           </span>
         )}
       </div>
@@ -111,6 +98,7 @@ const TaskBoard: React.FC = () => {
   const navigate = useNavigate();
   const [proyecto, setProyecto] = useState<Proyecto | null>(null);
   const [tareas, setTareas] = useState<Tarea[]>([]);
+  const [usuarioActual, setUsuarioActual] = useState<UsuarioActual | null>(null);
   const [loading, setLoading] = useState(true);
   const [draggedId, setDraggedId] = useState<number | null>(null);
   const [overCol, setOverCol] = useState<Tarea['estado'] | null>(null);
@@ -118,7 +106,9 @@ const TaskBoard: React.FC = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
+    const headers: Record<string, string> = token
+      ? { Authorization: `Bearer ${token}` }
+      : {};
     const proyectoId = Number(id);
 
     Promise.all([
@@ -127,18 +117,20 @@ const TaskBoard: React.FC = () => {
         .catch(() => ({ id: proyectoId, nombre: `Proyecto ${proyectoId}`, estado: 'EN_PROGRESO' })),
       fetch(`${API_BASE_URL}/api/proyectos/${proyectoId}/tareas`, { headers })
         .then(r => r.ok ? r.json() : Promise.reject())
-        .catch(() => loadLocalTasks(proyectoId)),
-    ]).then(([pData, tData]) => {
+        .catch(() => [] as Tarea[]),
+      fetch(API_ENDPOINTS.AUTH.ME, { headers })
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .catch(() => null),
+    ]).then(([pData, tData, meData]) => {
       setProyecto(pData);
       setTareas(tData);
+      if (meData) setUsuarioActual({ id: meData.id, nombre: meData.nombre });
     }).finally(() => setLoading(false));
   }, [id]);
 
-  /* ── Drag handlers ── */
   const handleDragStart = (e: React.DragEvent, tareaId: number) => {
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('tareaId', String(tareaId));
-    // Pequeño delay para que el estado visual se aplique después de que el browser tome el snapshot
     setTimeout(() => setDraggedId(tareaId), 0);
   };
 
@@ -172,16 +164,39 @@ const TaskBoard: React.FC = () => {
     const tareaId = Number(e.dataTransfer.getData('tareaId'));
     if (!tareaId) return;
 
-    setTareas(prev =>
-      prev.map(t => t.id === tareaId ? { ...t, estado: colKey } : t)
-    );
+    const tarea = tareas.find(t => t.id === tareaId);
+    if (!tarea || tarea.estado === colKey) return;
+
+    const token = localStorage.getItem('token');
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+
+    const tareaActualizada = { ...tarea, estado: colKey };
+
+    setTareas(prev => prev.map(t => t.id === tareaId ? tareaActualizada : t));
     setDraggedId(null);
     setOverCol(null);
     dragCounter.current = {};
+
+    fetch(`${API_BASE_URL}/api/proyectos/${tarea.proyectoId ?? id}/tareas/${tareaId}`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(tareaActualizada),
+    }).catch(() => {
+      // Revertir si la API falla
+      setTareas(prev => prev.map(t => t.id === tareaId ? tarea : t));
+    });
   };
 
+  // Solo mostrar las tareas asignadas al usuario actual
+  const misTareas = usuarioActual
+    ? tareas.filter(t => t.asignadoId === usuarioActual.id)
+    : tareas;
+
   const tareasPorEstado = (estado: Tarea['estado']) =>
-    tareas.filter(t => t.estado === estado);
+    misTareas.filter(t => t.estado === estado);
 
   const estadoCfg = proyecto
     ? (ESTADO_PROYECTO_CONFIG[proyecto.estado] ?? ESTADO_PROYECTO_CONFIG.INICIO)
@@ -189,7 +204,6 @@ const TaskBoard: React.FC = () => {
 
   return (
     <div className="task-board">
-      {/* Header */}
       <div className="tb-header">
         <button className="tb-back-btn" onClick={() => navigate('/user/proyectos')}>
           <ArrowLeft size={18} />
@@ -204,7 +218,9 @@ const TaskBoard: React.FC = () => {
             <h1 className="tb-project-name">
               {loading ? 'Cargando...' : proyecto?.nombre ?? `Proyecto ${id}`}
             </h1>
-            <p className="tb-project-sub">Tablero de tareas</p>
+            <p className="tb-project-sub">
+              {usuarioActual ? `Mis tareas — ${usuarioActual.nombre}` : 'Tablero de tareas'}
+            </p>
           </div>
         </div>
 
@@ -218,7 +234,6 @@ const TaskBoard: React.FC = () => {
         )}
       </div>
 
-      {/* Kanban */}
       <div className="tb-board">
         {COLUMNAS.map(col => {
           const colTareas = tareasPorEstado(col.key);
@@ -256,16 +271,10 @@ const TaskBoard: React.FC = () => {
                     />
                   ))
                 )}
-                {/* Zona de drop visible al final cuando la columna tiene tareas */}
                 {isOver && colTareas.length > 0 && (
                   <div className="tb-drop-zone">Soltar aquí</div>
                 )}
               </div>
-
-              <button className="tb-add-btn">
-                <Plus size={15} />
-                Agregar tarea
-              </button>
             </div>
           );
         })}

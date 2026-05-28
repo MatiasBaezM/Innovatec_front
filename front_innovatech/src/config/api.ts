@@ -11,6 +11,7 @@ export const API_ENDPOINTS = {
     REGISTER: `${API_BASE_URL}/auth/register`,
     USERS: `${API_BASE_URL}/auth/users`,
     VALIDATE: `${API_BASE_URL}/auth/validate`,
+    ME: `${API_BASE_URL}/auth/me`,
   },
   PROJECTS: {
     BASE: `${API_BASE_URL}/api/proyectos`,

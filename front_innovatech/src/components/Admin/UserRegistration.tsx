@@ -9,7 +9,8 @@ const UserRegistration: React.FC = () => {
     rut: '',
     nombre: '',
     clave: '',
-    rol: 'COLABORADOR'
+    rol: 'COLABORADOR',
+    correo: ''
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -54,7 +55,7 @@ const UserRegistration: React.FC = () => {
       }).catch(err => console.log('Error logging activity', err));
 
       setMessage({ type: 'success', text: 'Usuario registrado exitosamente' });
-      setFormData({ rut: '', nombre: '', clave: '', rol: 'COLABORADOR' });
+      setFormData({ rut: '', nombre: '', clave: '', rol: 'COLABORADOR', correo: '' });
     } catch (err: any) {
       setMessage({ type: 'danger', text: err.message || 'Error de conexión con el servidor' });
     } finally {
@@ -125,6 +126,22 @@ const UserRegistration: React.FC = () => {
                     />
                   </Form.Group>
                 </Col>
+                <Col md={6}>
+                  <Form.Group className="mb-4">
+                    <Form.Label className="text-light small fw-bold">Correo Electrónico</Form.Label>
+                    <Form.Control
+                      type="email"
+                      name="correo"
+                      placeholder="ejemplo@empresa.com"
+                      value={formData.correo}
+                      onChange={handleChange}
+                      className="registration-input"
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+
+              <Row>
                 <Col md={6}>
                   <Form.Group className="mb-4">
                     <Form.Label className="text-light small fw-bold">Rol</Form.Label>

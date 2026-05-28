@@ -11,6 +11,7 @@ interface Usuario {
   nombre: string;
   clave?: string;
   rol: string;
+  correo?: string;
 }
 
 const UsersManagement: React.FC = () => {
@@ -24,7 +25,8 @@ const UsersManagement: React.FC = () => {
     rut: '',
     nombre: '',
     clave: '',
-    rol: 'COLABORADOR'
+    rol: 'COLABORADOR',
+    correo: ''
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -60,7 +62,7 @@ const UsersManagement: React.FC = () => {
       setCurrentUser({ ...user, clave: '' }); // No mostramos la clave
     } else {
       setIsEditing(false);
-      setCurrentUser({ rut: '', nombre: '', clave: '', rol: 'COLABORADOR' });
+      setCurrentUser({ rut: '', nombre: '', clave: '', rol: 'COLABORADOR', correo: '' });
     }
     setShowModal(true);
   };
@@ -168,6 +170,7 @@ const UsersManagement: React.FC = () => {
               <th>ID</th>
               <th>Nombre</th>
               <th>RUT</th>
+              <th>Correo</th>
               <th>Rol</th>
               <th className="text-end">Acciones</th>
             </tr>
@@ -178,6 +181,7 @@ const UsersManagement: React.FC = () => {
                 <td className="text-muted">#{user.id}</td>
                 <td className="fw-500 text-dark">{user.nombre}</td>
                 <td className="text-muted">{user.rut}</td>
+                <td className="text-muted">{user.correo ?? '—'}</td>
                 <td>
                   <Badge bg={getBadgeVariant(user.rol)} className="role-badge">
                     {user.rol}
@@ -234,6 +238,17 @@ const UsersManagement: React.FC = () => {
                 value={currentUser.clave}
                 onChange={handleChange}
                 required={!isEditing}
+                className="modal-input"
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Correo Electrónico</Form.Label>
+              <Form.Control
+                type="email"
+                name="correo"
+                value={currentUser.correo ?? ''}
+                onChange={handleChange}
+                placeholder="ejemplo@empresa.com"
                 className="modal-input"
               />
             </Form.Group>
