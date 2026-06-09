@@ -89,6 +89,10 @@
   overflow: hidden;
 }
 
+.tb-board-4col {
+  grid-template-columns: repeat(4, 1fr);
+}
+
 /* ── Column ── */
 .tb-column {
   background: #f1f5f9;
@@ -323,6 +327,47 @@
   flex-shrink: 0;
 }
 
+/* ── Columna readonly (REVISADO) ── */
+.tb-col-readonly {
+  background: #f5f3ff;
+  border-color: rgba(139, 92, 246, 0.2) !important;
+}
+
+/* ── Tarjeta readonly (REVISADO) ── */
+.tb-task-readonly {
+  cursor: default !important;
+  opacity: 0.85;
+  background: #faf5ff;
+  border-color: rgba(139, 92, 246, 0.12) !important;
+}
+
+.tb-task-readonly:hover {
+  transform: none !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* ── Mensaje de corrección ── */
+.tb-correction-msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-left: 3px solid #f97316;
+  border-radius: 6px;
+  padding: 0.5rem 0.6rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.75rem;
+  color: #9a3412;
+  line-height: 1.4;
+}
+
+.tb-correction-msg svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #f97316;
+}
+
 /* ── Add button ── */
 .tb-add-btn {
   display: flex;
@@ -347,12 +392,19 @@
 }
 
 /* ── Responsive ── */
+@media (max-width: 1100px) {
+  .tb-board-4col {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 900px) {
   .task-board {
     height: auto;
   }
 
-  .tb-board {
+  .tb-board,
+  .tb-board-4col {
     grid-template-columns: 1fr;
     overflow: visible;
   }

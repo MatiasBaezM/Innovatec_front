@@ -9,6 +9,7 @@ export interface UserInfo {
 interface AuthContextType {
   userInfo: UserInfo | null;
   isAdmin: () => boolean;
+  isGestor: () => boolean;
   refreshUser: () => void;
   logout: () => void;
 }
@@ -57,7 +58,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const isAdmin = () => {
     if (!userInfo) return false;
-    return ['ADMINISTRADOR', 'GESTOR_PROYECTOS'].includes(userInfo.rol);
+    return userInfo.rol === 'ADMINISTRADOR';
+  };
+
+  const isGestor = () => {
+    if (!userInfo) return false;
+    return userInfo.rol === 'GESTOR_PROYECTOS';
   };
 
   const logout = () => {
@@ -67,7 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ userInfo, isAdmin, refreshUser, logout }}>
+    <AuthContext.Provider value={{ userInfo, isAdmin, isGestor, refreshUser, logout }}>
       {children}
     </AuthContext.Provider>
   );

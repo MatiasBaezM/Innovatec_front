@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Modal, Form, Alert, Badge, Card } from 'react-bootstrap';
-import { Pencil, Trash2, Plus, Users, ClipboardList, ChevronLeft } from 'lucide-react';
+import { Pencil, Trash2, Plus, Users, ClipboardList, ChevronLeft, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { API_ENDPOINTS } from '../../config/api';
 import API_BASE_URL from '../../config/api';
 import './ProjectsManagement.css';
@@ -23,7 +23,8 @@ interface Tarea {
   asignadoId: number;
   asignadoNombre: string;
   prioridad: 'ALTA' | 'MEDIA' | 'BAJA';
-  estado: 'POR_HACER' | 'EN_PROGRESO' | 'COMPLETADO';
+  estado: 'POR_HACER' | 'EN_PROGRESO' | 'COMPLETADO' | 'REVISADO';
+  mensajeCorreccion?: string;
 }
 
 const PRIORIDAD_OPTS = [
@@ -75,6 +76,8 @@ const ProjectsManagement: React.FC = () => {
   const [showTeamModal, setShowTeamModal] = useState(false);
   const [selectedProjectForTeam, setSelectedProjectForTeam] = useState<Proyecto | null>(null);
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
+  const [availableGestores, setAvailableGestores] = useState<any[]>([]);
+  const [selectedGestorId, setSelectedGestorId] = useState<string>('');
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [assignedTeam, setAssignedTeam] = useState<any[]>([]);
   const [isEditing, setIsEditing] = useState(false);
@@ -94,6 +97,11 @@ const ProjectsManagement: React.FC = () => {
   const [newTask, setNewTask] = useState<Omit<Tarea, 'id'>>(emptyTask(0));
   const [taskLoading, setTaskLoading] = useState(false);
   const [taskMessage, setTaskMessage] = useState({ type: '', text: '' });
+
+  // ── Rejection modal state ──
+  const [rejectionModal, setRejectionModal] = useState<{
+    open: boolean; tarea: Tarea | null; mensaje: string;
+  }>({ open: false, tarea: null, mensaje: '' });
 
   const mockProjects: Proyecto[] = [
     { id: 1, nombre: 'Sistema Innovatech', descripcion: 'Desarrollo de plataforma central', estado: 'EN_PROGRESO', fechaInicio: '2026-05-01' },
@@ -173,6 +181,7 @@ const ProjectsManagement: React.FC = () => {
     setSelectedProjectForTeam(project);
     setShowTeamModal(true);
     setSelectedUserId('');
+    setSelectedGestorId('');
     setAssignedTeam([]);
     setMessage({ type: '', text: '' });
     try {
@@ -180,16 +189,24 @@ const ProjectsManagement: React.FC = () => {
       if (res.ok) {
         const all = await res.json();
         setAvailableUsers(all.filter((u: any) => u.rol === 'COLABORADOR'));
+        setAvailableGestores(all.filter((u: any) => u.rol === 'GESTOR_PROYECTOS'));
       } else {
-        const r2 = await fetch(API_ENDPOINTS.RESOURCES.WORKERS);
-        setAvailableUsers(r2.ok ? await r2.json() : [{ id: 1, nombre: 'Juan Pérez' }, { id: 2, nombre: 'María Silva' }]);
+        setAvailableUsers([{ id: 1, nombre: 'Juan Pérez' }, { id: 2, nombre: 'María Silva' }]);
+        setAvailableGestores([{ id: 10, nombre: 'Gestor Demo' }]);
       }
-    } catch { setAvailableUsers([{ id: 1, nombre: 'Juan Pérez' }, { id: 2, nombre: 'María Silva' }]); }
+    } catch {
+      setAvailableUsers([{ id: 1, nombre: 'Juan Pérez' }, { id: 2, nombre: 'María Silva' }]);
+      setAvailableGestores([{ id: 10, nombre: 'Gestor Demo' }]);
+    }
     try {
       const r = await fetch(`${API_ENDPOINTS.RESOURCES.TEAMS}/proyecto/${project.id}`);
       if (r.ok) {
         const text = await r.text();
-        if (text) { const d = JSON.parse(text); if (d?.trabajadores?.length) setAssignedTeam(d.trabajadores); }
+        if (text) {
+          const d = JSON.parse(text);
+          if (d?.trabajadores?.length) setAssignedTeam(d.trabajadores);
+          if (d?.gestorId) setSelectedGestorId(String(d.gestorId));
+        }
       }
     } catch {}
   };
@@ -210,10 +227,13 @@ const ProjectsManagement: React.FC = () => {
     }
     setLoading(true);
     try {
+      const gestor = availableGestores.find(g => g.id.toString() === selectedGestorId);
       const payload = {
         nombre: `Equipo de ${selectedProjectForTeam.nombre}`,
         descripcion: `Equipo asignado para el proyecto: ${selectedProjectForTeam.nombre}`,
         proyectoId: selectedProjectForTeam.id,
+        gestorId: gestor?.id ?? null,
+        gestorNombre: gestor?.nombre ?? null,
         trabajadores: assignedTeam.map(u => ({ id: u.id })),
       };
       const response = await fetch(API_ENDPOINTS.RESOURCES.TEAMS, {
@@ -254,7 +274,7 @@ const ProjectsManagement: React.FC = () => {
       const res = await fetch(API_ENDPOINTS.AUTH.USERS);
       if (res.ok) {
         const all = await res.json();
-        setTaskUsers(all.filter((u: any) => ['COLABORADOR', 'ANALISTA'].includes(u.rol)));
+        setTaskUsers(all.filter((u: any) => u.rol === 'COLABORADOR'));
       } else {
         setTaskUsers([
           { id: 1, nombre: 'Juan Pérez' }, { id: 2, nombre: 'María Silva' },
@@ -320,6 +340,40 @@ const ProjectsManagement: React.FC = () => {
       setTaskMessage({ type: '', text: '' });
     }, 1200);
     setTaskLoading(false);
+  };
+
+  // ─── Task validation ─────────────────────────
+  const handleApproveTask = async (tarea: Tarea) => {
+    const updated: Tarea = { ...tarea, estado: 'REVISADO', mensajeCorreccion: undefined };
+    setProjectTasks(prev => prev.map(t => t.id === tarea.id ? updated : t));
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`${API_BASE_URL}/api/proyectos/${tarea.proyectoId}/tareas/${tarea.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(updated),
+      });
+    } catch {}
+  };
+
+  const openRejection = (tarea: Tarea) => {
+    setRejectionModal({ open: true, tarea, mensaje: '' });
+  };
+
+  const handleRejectTask = async () => {
+    const { tarea, mensaje } = rejectionModal;
+    if (!tarea || !mensaje.trim()) return;
+    const updated: Tarea = { ...tarea, estado: 'POR_HACER', mensajeCorreccion: mensaje.trim() };
+    setProjectTasks(prev => prev.map(t => t.id === tarea.id ? updated : t));
+    setRejectionModal({ open: false, tarea: null, mensaje: '' });
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`${API_BASE_URL}/api/proyectos/${tarea.proyectoId}/tareas/${tarea.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(updated),
+      });
+    } catch {}
   };
 
   const getStatusVariant = (estado: string) => {
@@ -443,8 +497,26 @@ const ProjectsManagement: React.FC = () => {
         </Modal.Header>
         <Modal.Body>
           {message.text && <Alert variant={message.type}>{message.text}</Alert>}
+
+          {/* ── Gestor del proyecto ── */}
           <Form.Group className="mb-4">
-            <Form.Label>Seleccionar Colaborador</Form.Label>
+            <Form.Label className="fw-semibold">Gestor del Proyecto</Form.Label>
+            <Form.Select
+              value={selectedGestorId}
+              onChange={e => setSelectedGestorId(e.target.value)}
+              className="modal-input"
+            >
+              <option value="">Sin gestor asignado</option>
+              {availableGestores.map(g => <option key={g.id} value={g.id}>{g.nombre}</option>)}
+            </Form.Select>
+            <Form.Text className="text-muted">El gestor podrá ver y validar todas las tareas del proyecto.</Form.Text>
+          </Form.Group>
+
+          <hr className="my-3" />
+
+          {/* ── Colaboradores ── */}
+          <Form.Group className="mb-4">
+            <Form.Label className="fw-semibold">Agregar Colaborador</Form.Label>
             <div className="d-flex gap-2">
               <Form.Select value={selectedUserId} onChange={e => setSelectedUserId(e.target.value)} className="modal-input">
                 <option value="">Seleccione un usuario...</option>
@@ -515,23 +587,47 @@ const ProjectsManagement: React.FC = () => {
                 <div className="task-admin-list">
                   {projectTasks.map(t => {
                     const p = PRIORIDAD_CONFIG[t.prioridad];
+                    const estadoLabel: Record<string, string> = {
+                      POR_HACER: 'Por Hacer', EN_PROGRESO: 'En Progreso',
+                      COMPLETADO: 'Completado', REVISADO: 'Revisado',
+                    };
+                    const estadoBg: Record<string, string> = {
+                      POR_HACER: 'secondary', EN_PROGRESO: 'warning',
+                      COMPLETADO: 'success', REVISADO: 'info',
+                    };
                     return (
                       <div key={t.id} className="task-admin-item">
-                        <div className="task-admin-left">
+                        <div className="task-admin-left" style={{ flex: 1 }}>
                           <div className="d-flex align-items-center gap-2 mb-1">
                             <span className="task-admin-title">{t.titulo}</span>
                             <Badge style={{ backgroundColor: p.bg, color: p.color, fontSize: '0.7rem', fontWeight: 700 }}>
                               {t.prioridad}
                             </Badge>
                           </div>
+                          {t.mensajeCorreccion && t.estado === 'POR_HACER' && (
+                            <div className="task-correction-msg">
+                              <AlertTriangle size={12} />
+                              <span>Corrección: {t.mensajeCorreccion}</span>
+                            </div>
+                          )}
                           <p className="task-admin-desc">{t.descripcion}</p>
                           <div className="task-admin-meta">
                             <span>👤 {t.asignadoNombre || '—'}</span>
                             <span>📅 Límite: {t.fechaLimite || '—'}</span>
                           </div>
+                          {t.estado === 'COMPLETADO' && (
+                            <div className="task-validation-btns">
+                              <button className="task-btn-approve" onClick={() => handleApproveTask(t)}>
+                                <CheckCircle size={13} /> Aprobar
+                              </button>
+                              <button className="task-btn-reject" onClick={() => openRejection(t)}>
+                                <XCircle size={13} /> Rechazar
+                              </button>
+                            </div>
+                          )}
                         </div>
-                        <Badge bg={t.estado === 'POR_HACER' ? 'secondary' : t.estado === 'EN_PROGRESO' ? 'warning' : 'success'} className="task-admin-estado">
-                          {t.estado === 'POR_HACER' ? 'Por Hacer' : t.estado === 'EN_PROGRESO' ? 'En Progreso' : 'Completado'}
+                        <Badge bg={estadoBg[t.estado] ?? 'secondary'} className="task-admin-estado">
+                          {estadoLabel[t.estado] ?? t.estado}
                         </Badge>
                       </div>
                     );
@@ -620,6 +716,36 @@ const ProjectsManagement: React.FC = () => {
               {taskLoading ? 'Creando...' : 'Crear Tarea'}
             </Button>
           )}
+        </Modal.Footer>
+      </Modal>
+      {/* ── Modal Rechazo de Tarea ── */}
+      <Modal show={rejectionModal.open} onHide={() => setRejectionModal({ open: false, tarea: null, mensaje: '' })} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Solicitar Correcciones</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="text-muted mb-3">
+            La tarea <strong>{rejectionModal.tarea?.titulo}</strong> será enviada de vuelta a{' '}
+            <strong>Por Hacer</strong> con el siguiente mensaje para el colaborador.
+          </p>
+          <Form.Group>
+            <Form.Label>Mensaje de correcciones <span className="text-danger">*</span></Form.Label>
+            <Form.Control
+              as="textarea" rows={4}
+              value={rejectionModal.mensaje}
+              onChange={e => setRejectionModal(prev => ({ ...prev, mensaje: e.target.value }))}
+              placeholder="Describe qué debe corregir el colaborador..."
+            />
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setRejectionModal({ open: false, tarea: null, mensaje: '' })}>
+            Cancelar
+          </Button>
+          <Button variant="danger" disabled={!rejectionModal.mensaje.trim()} onClick={handleRejectTask}>
+            <XCircle size={16} className="me-1" />
+            Rechazar y Solicitar Correcciones
+          </Button>
         </Modal.Footer>
       </Modal>
     </div>

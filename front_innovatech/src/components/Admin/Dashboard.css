@@ -1,8 +1,58 @@
 .dashboard-title {
-  font-size: 2.25rem;
+  font-size: 1.65rem;
   font-weight: 800;
   color: var(--text-h);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+/* ── Export button ── */
+.analytics-export-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 0.55rem 1.1rem !important;
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3) !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+}
+
+.analytics-export-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45) !important;
+}
+
+.analytics-export-btn:disabled { opacity: 0.5; }
+
+/* ── Resumen general ── */
+.analytics-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.analytics-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.analytics-summary-row:last-child { border-bottom: none; }
+
+.analytics-summary-label {
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.analytics-summary-value {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-h, #0f172a);
 }
 
 /* ── Stat cards ── */

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Row, Col, Card, Badge } from 'react-bootstrap';
-import { User, Shield, Hash, Activity } from 'lucide-react';
+import { User, Shield, Hash, Activity, Tag } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { API_ENDPOINTS } from '../../config/api';
+import { type Habilidad, loadSkillsFromStorage, loadUserSkillIds } from '../../utils/skillsUtils';
 import './UserProfile.css';
 
 interface Actividad {
@@ -21,6 +22,7 @@ const ROL_CONFIG: Record<string, { label: string; color: string; bg: string }> =
 const UserProfile: React.FC = () => {
   const { userInfo } = useAuth();
   const [actividades, setActividades] = useState<Actividad[]>([]);
+  const [misHabilidades, setMisHabilidades] = useState<Habilidad[]>([]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -30,7 +32,13 @@ const UserProfile: React.FC = () => {
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(data => setActividades(data.slice(0, 8)))
       .catch(() => setActividades([]));
-  }, []);
+
+    if (userInfo?.id) {
+      const allSkills = loadSkillsFromStorage();
+      const ids = loadUserSkillIds(userInfo.id);
+      setMisHabilidades(allSkills.filter(s => ids.includes(s.id)));
+    }
+  }, [userInfo?.id]);
 
   const rolCfg = ROL_CONFIG[userInfo?.rol ?? ''] ?? {
     label: userInfo?.rol ?? 'Usuario',
@@ -87,6 +95,43 @@ const UserProfile: React.FC = () => {
                     <span className="uprof-info-value">{userInfo?.nombre || '—'}</span>
                   </div>
                 </div>
+              </div>
+
+              {/* Habilidades */}
+              <hr className="uprof-divider" />
+              <div className="text-start">
+                <div className="d-flex align-items-center gap-2 mb-2">
+                  <Tag size={14} style={{ color: '#f59e0b' }} />
+                  <span className="uprof-info-label" style={{ fontWeight: 600, fontSize: '0.8rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '.04em' }}>
+                    Habilidades
+                  </span>
+                </div>
+                {misHabilidades.length === 0 ? (
+                  <p className="text-muted" style={{ fontSize: '0.82rem' }}>Sin habilidades asignadas.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                    {misHabilidades.map(h => (
+                      <span
+                        key={h.id}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.3rem',
+                          padding: '0.25em 0.7em',
+                          borderRadius: '8px',
+                          backgroundColor: h.color + '22',
+                          color: h.color,
+                          border: `1px solid ${h.color}44`,
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <span style={{ width: 7, height: 7, borderRadius: '50%', background: h.color, flexShrink: 0 }} />
+                        {h.nombre}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </Card.Body>
           </Card>

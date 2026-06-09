@@ -5,11 +5,13 @@
 .create-project-btn {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
   border: none !important;
-  border-radius: 12px !important;
-  padding: 0.75rem 1.5rem !important;
-  font-weight: 700 !important;
-  box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.4) !important;
-  transition: all 0.3s ease !important;
+  border-radius: 10px !important;
+  padding: 0.55rem 1.1rem !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.35) !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap;
 }
 
 .create-project-btn:hover {
@@ -32,18 +34,19 @@
 .projects-table thead th {
   background: #f8fafc;
   border-bottom: 1px solid var(--border) !important;
-  padding: 1.25rem 1rem;
+  padding: 0.75rem 1rem;
   color: #64748b;
   font-weight: 600;
   text-transform: uppercase;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   letter-spacing: 0.05em;
 }
 
 .projects-table tbody td {
-  padding: 1.25rem 1rem;
+  padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border) !important;
   vertical-align: middle;
+  font-size: 0.875rem;
 }
 
 .projects-table tbody tr:hover {
@@ -109,7 +112,58 @@
   font-size: 0.72rem !important;
   white-space: nowrap;
   flex-shrink: 0;
+  align-self: flex-start;
 }
+
+/* ── Task validation buttons (admin view) ── */
+.task-validation-btns {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.55rem;
+}
+
+.task-btn-approve,
+.task-btn-reject {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.28rem 0.65rem;
+  border-radius: 7px;
+  border: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.task-btn-approve {
+  background: #d1fae5;
+  color: #065f46;
+}
+.task-btn-approve:hover { background: #a7f3d0; }
+
+.task-btn-reject {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.task-btn-reject:hover { background: #fecaca; }
+
+/* ── Task correction message (admin view) ── */
+.task-correction-msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-left: 3px solid #f97316;
+  border-radius: 6px;
+  padding: 0.4rem 0.55rem;
+  margin-bottom: 0.45rem;
+  font-size: 0.73rem;
+  color: #9a3412;
+  line-height: 1.4;
+}
+.task-correction-msg svg { flex-shrink: 0; margin-top: 1px; color: #f97316; }
 
 /* Modal Styles */
 .project-modal .modal-content {

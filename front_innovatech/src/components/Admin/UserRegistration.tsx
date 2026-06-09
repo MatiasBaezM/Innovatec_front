@@ -154,7 +154,6 @@ const UserRegistration: React.FC = () => {
                       <option value="COLABORADOR">Colaborador</option>
                       <option value="ADMINISTRADOR">Administrador</option>
                       <option value="GESTOR_PROYECTOS">Gestor de Proyectos</option>
-                      <option value="ANALISTA">Analista</option>
                     </Form.Select>
                   </Form.Group>
                 </Col>

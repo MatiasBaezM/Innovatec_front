@@ -6,7 +6,11 @@ import { formatRut, validateRut } from '../../utils/rutUtils';
 import { getRoleFromToken, useAuth } from '../../context/AuthContext';
 import './Login.css';
 
-const ADMIN_ROLES = ['ADMINISTRADOR', 'GESTOR_PROYECTOS'];
+function getRedirectPath(rol: string | null): string {
+  if (rol === 'ADMINISTRADOR') return '/analiticas';
+  if (rol === 'GESTOR_PROYECTOS') return '/gestor';
+  return '/user';
+}
 
 const Login: React.FC = () => {
   const [rut, setRut] = useState('');
@@ -20,7 +24,7 @@ const Login: React.FC = () => {
     const token = localStorage.getItem('token');
     if (token) {
       const rol = getRoleFromToken();
-      navigate(rol && ADMIN_ROLES.includes(rol) ? '/dashboard' : '/user', { replace: true });
+      navigate(getRedirectPath(rol), { replace: true });
     }
   }, []);
 
@@ -54,7 +58,7 @@ const Login: React.FC = () => {
       refreshUser(); // sincroniza AuthContext antes de navegar
 
       const rol = getRoleFromToken();
-      navigate(rol && ADMIN_ROLES.includes(rol) ? '/dashboard' : '/user');
+      navigate(getRedirectPath(rol));
     } catch (err: any) {
       setError(err.message || 'Error al conectar con el servidor');
     } finally {
@@ -99,44 +103,31 @@ const Login: React.FC = () => {
           </Button>
 
           <div className="text-center mt-3 d-flex flex-column gap-1">
-            <button
-              type="button"
-              className="btn btn-link text-decoration-none text-light opacity-75"
-              onClick={() => {
-                const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
-                  .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
-                const payload = btoa(JSON.stringify({
-                  sub: '11.111.111-1',
-                  nombre: 'Administrador Demo',
-                  rol: 'ADMINISTRADOR',
-                  iat: Math.floor(Date.now() / 1000),
-                  exp: Math.floor(Date.now() / 1000) + 36000,
-                })).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
-                localStorage.setItem('token', `${header}.${payload}.dev-signature`);
-                navigate('/dashboard');
-              }}
-            >
-              Acceso Provisorio Admin
-            </button>
-            <button
-              type="button"
-              className="btn btn-link text-decoration-none text-light opacity-50"
-              onClick={() => {
-                const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
-                  .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
-                const payload = btoa(JSON.stringify({
-                  sub: '12.345.678-9',
-                  nombre: 'Usuario Demo',
-                  rol: 'COLABORADOR',
-                  iat: Math.floor(Date.now() / 1000),
-                  exp: Math.floor(Date.now() / 1000) + 86400,
-                })).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
-                localStorage.setItem('token', `${header}.${payload}.dev-signature`);
-                navigate('/user');
-              }}
-            >
-              Acceso Provisorio Usuario
-            </button>
+            {[
+              { label: 'Acceso Demo — Admin',      rol: 'ADMINISTRADOR',    rut: '11.111.111-1', nombre: 'Admin Demo',   path: '/dashboard', opacity: '0.85' },
+              { label: 'Acceso Demo — Gestor',     rol: 'GESTOR_PROYECTOS', rut: '22.222.222-2', nombre: 'Gestor Demo',  path: '/gestor',    opacity: '0.65' },
+              { label: 'Acceso Demo — Colaborador',rol: 'COLABORADOR',      rut: '33.333.333-3', nombre: 'Colab Demo',   path: '/user',      opacity: '0.45' },
+            ].map(({ label, rol, rut: demoRut, nombre, path, opacity }) => (
+              <button
+                key={rol}
+                type="button"
+                className="btn btn-link text-decoration-none text-light"
+                style={{ opacity }}
+                onClick={() => {
+                  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
+                    .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+                  const payload = btoa(JSON.stringify({
+                    sub: demoRut, nombre, rol,
+                    iat: Math.floor(Date.now() / 1000),
+                    exp: Math.floor(Date.now() / 1000) + 86400,
+                  })).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+                  localStorage.setItem('token', `${header}.${payload}.dev-signature`);
+                  navigate(path);
+                }}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </Form>
       </div>

@@ -12,24 +12,24 @@
   left: 0;
   right: 0;
   z-index: 1000;
-  height: 64px;
+  height: 56px;
   background: #0f172a;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
 }
 
 .user-navbar-inner {
   height: 100%;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 1.25rem;
   display: flex;
   align-items: center;
-  gap: 2rem;
+  gap: 1.5rem;
 }
 
 .user-navbar-brand {
-  font-size: 1.35rem;
+  font-size: 1.15rem;
   font-weight: 800;
   background: linear-gradient(to right, #818cf8, #c084fc);
   -webkit-background-clip: text;
@@ -50,12 +50,12 @@
 .user-nav-link {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.9rem;
-  border-radius: 10px;
+  gap: 0.45rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
   color: #94a3b8;
   text-decoration: none;
-  font-size: 0.92rem;
+  font-size: 0.875rem;
   font-weight: 500;
   transition: all 0.2s ease;
   white-space: nowrap;
@@ -133,19 +133,30 @@
 .user-logout-btn {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 0.45rem;
+  gap: 0.4rem;
+  padding: 0.45rem 0.75rem;
   border: none;
   border-radius: 8px;
   background: none;
   color: #64748b;
+  font-size: 0.88rem;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .user-logout-btn:hover {
   background: rgba(239, 68, 68, 0.12);
   color: #ef4444;
+}
+
+.user-logout-label {
+  display: inline;
+}
+
+@media (max-width: 768px) {
+  .user-logout-label { display: none; }
 }
 
 .user-hamburger {
@@ -169,8 +180,8 @@
 /* ── Main content ── */
 .user-main {
   flex: 1;
-  margin-top: 64px;
-  padding: 2rem 1.5rem;
+  margin-top: 56px;
+  padding: 1.5rem 1.25rem;
 }
 
 .user-content {
@@ -225,6 +236,6 @@
 
   .user-main {
     margin-top: 0;
-    padding: 1.25rem 1rem;
+    padding: 1rem;
   }
 }

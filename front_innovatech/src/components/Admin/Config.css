@@ -3,10 +3,10 @@
 }
 
 .config-title {
-  font-size: 2.25rem;
+  font-size: 1.65rem;
   font-weight: 800;
   color: var(--text-h);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.35rem;
 }
 
 /* ── Card ── */

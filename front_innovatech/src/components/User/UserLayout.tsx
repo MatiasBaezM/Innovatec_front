@@ -53,8 +53,9 @@ const UserLayout: React.FC<UserLayoutProps> = ({ children }) => {
                 <div className="user-avatar-circle">{initials}</div>
                 <span className="user-display-name">{userInfo?.nombre || 'Usuario'}</span>
               </Link>
-              <button className="user-logout-btn" onClick={logout} title="Cerrar sesión">
-                <LogOut size={18} />
+              <button className="user-logout-btn" onClick={logout}>
+                <LogOut size={16} />
+                <span className="user-logout-label">Cerrar Sesión</span>
               </button>
             </div>
             <button

@@ -6,9 +6,10 @@
 
 .admin-content {
   flex-grow: 1;
-  margin-left: 260px;
-  padding: 2rem;
+  margin-left: 230px;
+  padding: 1.5rem;
   transition: margin-left 0.3s ease;
+  min-width: 0;
 }
 
 .admin-layout.sidebar-hidden .admin-content {
@@ -18,16 +19,15 @@
 .admin-topbar {
   display: flex;
   justify-content: flex-start;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 
 .toggle-sidebar-btn {
   background: none;
   border: none;
-  font-size: 1.5rem;
   cursor: pointer;
   color: #0f172a;
-  padding: 0.5rem;
+  padding: 0.4rem;
   border-radius: 8px;
   transition: all 0.2s ease;
   display: flex;
@@ -44,12 +44,18 @@
   margin: 0 auto;
 }
 
+@media (max-width: 1024px) {
+  .admin-content {
+    padding: 1.25rem;
+  }
+}
+
 @media (max-width: 768px) {
   .admin-content {
-    margin-left: 70px;
-    padding: 1.5rem;
+    margin-left: 64px;
+    padding: 1rem;
   }
-  
+
   .admin-layout.sidebar-hidden .admin-content {
     margin-left: 0;
   }

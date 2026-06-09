@@ -4,17 +4,17 @@ import AdminLayout from './components/Admin/AdminLayout'
 import Dashboard from './components/Admin/Dashboard'
 import UsersManagement from './components/Admin/UsersManagement'
 import ProjectsManagement from './components/Admin/ProjectsManagement'
-import Analytics from './components/Admin/Analytics'
 import Config from './components/Admin/Config'
 import UserLayout from './components/User/UserLayout'
 import UserDashboard from './components/User/UserDashboard'
 import UserProjects from './components/User/UserProjects'
 import UserProfile from './components/User/UserProfile'
 import TaskBoard from './components/User/TaskBoard'
+import GestorLayout from './components/Gestor/GestorLayout'
+import GestorProjects from './components/Gestor/GestorProjects'
+import GestorTaskBoard from './components/Gestor/GestorTaskBoard'
 import { getRoleFromToken } from './context/AuthContext'
 import './App.css'
-
-const ADMIN_ROLES = ['ADMINISTRADOR', 'GESTOR_PROYECTOS'];
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const token = localStorage.getItem('token');
@@ -28,7 +28,18 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   if (!token) return <Navigate to="/login" state={{ from: location }} replace />;
   const rol = getRoleFromToken();
-  if (!rol || !ADMIN_ROLES.includes(rol)) return <Navigate to="/user" replace />;
+  if (rol === 'GESTOR_PROYECTOS') return <Navigate to="/gestor" replace />;
+  if (rol !== 'ADMINISTRADOR') return <Navigate to="/user" replace />;
+  return <>{children}</>;
+};
+
+const GestorRoute = ({ children }: { children: React.ReactNode }) => {
+  const token = localStorage.getItem('token');
+  const location = useLocation();
+  if (!token) return <Navigate to="/login" state={{ from: location }} replace />;
+  const rol = getRoleFromToken();
+  if (rol === 'ADMINISTRADOR') return <Navigate to="/analiticas" replace />;
+  if (rol !== 'GESTOR_PROYECTOS') return <Navigate to="/user" replace />;
   return <>{children}</>;
 };
 
@@ -39,8 +50,9 @@ function App() {
       <Route path="/login" element={<Login />} />
 
       {/* Rutas de administrador */}
+      <Route path="/dashboard" element={<Navigate to="/analiticas" replace />} />
       <Route
-        path="/dashboard"
+        path="/analiticas"
         element={
           <AdminRoute>
             <AdminLayout>
@@ -70,16 +82,6 @@ function App() {
         }
       />
       <Route
-        path="/analiticas"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <Analytics />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
         path="/config"
         element={
           <AdminRoute>
@@ -90,7 +92,39 @@ function App() {
         }
       />
 
-      {/* Rutas de usuario normal */}
+      {/* Rutas de gestor de proyectos */}
+      <Route
+        path="/gestor"
+        element={
+          <GestorRoute>
+            <GestorLayout>
+              <GestorProjects />
+            </GestorLayout>
+          </GestorRoute>
+        }
+      />
+      <Route
+        path="/gestor/proyectos"
+        element={
+          <GestorRoute>
+            <GestorLayout>
+              <GestorProjects />
+            </GestorLayout>
+          </GestorRoute>
+        }
+      />
+      <Route
+        path="/gestor/proyectos/:id"
+        element={
+          <GestorRoute>
+            <GestorLayout>
+              <GestorTaskBoard />
+            </GestorLayout>
+          </GestorRoute>
+        }
+      />
+
+      {/* Rutas de colaborador */}
       <Route
         path="/user"
         element={

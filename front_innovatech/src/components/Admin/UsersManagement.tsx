@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Modal, Form, Alert, Badge, Card, InputGroup } from 'react-bootstrap';
-import { Pencil, Trash2, Search, Plus } from 'lucide-react';
+import { Pencil, Trash2, Search, Plus, Tag } from 'lucide-react';
 import { API_ENDPOINTS } from '../../config/api';
 import { formatRut, validateRut } from '../../utils/rutUtils';
+import {
+  type Habilidad,
+  loadSkillsFromStorage,
+  loadUserSkillIds,
+  saveUserSkillIds,
+} from '../../utils/skillsUtils';
 import './UsersManagement.css';
 
 interface Usuario {
@@ -31,6 +37,10 @@ const UsersManagement: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
+  // Habilidades
+  const [availableHabilidades, setAvailableHabilidades] = useState<Habilidad[]>([]);
+  const [selectedHabilidades, setSelectedHabilidades] = useState<number[]>([]);
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -57,12 +67,16 @@ const UsersManagement: React.FC = () => {
   );
 
   const handleShow = (user?: Usuario) => {
+    const skills = loadSkillsFromStorage();
+    setAvailableHabilidades(skills);
     if (user) {
       setIsEditing(true);
-      setCurrentUser({ ...user, clave: '' }); // No mostramos la clave
+      setCurrentUser({ ...user, clave: '' });
+      setSelectedHabilidades(user.id ? loadUserSkillIds(user.id) : []);
     } else {
       setIsEditing(false);
       setCurrentUser({ rut: '', nombre: '', clave: '', rol: 'COLABORADOR', correo: '' });
+      setSelectedHabilidades([]);
     }
     setShowModal(true);
   };
@@ -70,6 +84,13 @@ const UsersManagement: React.FC = () => {
   const handleClose = () => {
     setShowModal(false);
     setMessage({ type: '', text: '' });
+    setSelectedHabilidades([]);
+  };
+
+  const toggleHabilidad = (id: number) => {
+    setSelectedHabilidades(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
   };
 
   const handleChange = (e: React.ChangeEvent<any>) => {
@@ -100,6 +121,9 @@ const UsersManagement: React.FC = () => {
 
       if (!response.ok) throw new Error('Error en la operación');
 
+      const saved = await response.json().catch(() => null);
+      const userId = saved?.id ?? currentUser.id;
+      if (userId) saveUserSkillIds(userId, selectedHabilidades);
       setMessage({ type: 'success', text: `Usuario ${isEditing ? 'actualizado' : 'creado'} con éxito` });
       fetchUsers();
       setTimeout(handleClose, 1500);
@@ -130,10 +154,9 @@ const UsersManagement: React.FC = () => {
 
   const getBadgeVariant = (rol: string) => {
     switch (rol) {
-      case 'ADMINISTRADOR': return 'danger';
+      case 'ADMINISTRADOR':    return 'danger';
       case 'GESTOR_PROYECTOS': return 'warning';
-      case 'ANALISTA': return 'info';
-      default: return 'primary';
+      default:                 return 'primary';
     }
   };
 
@@ -263,9 +286,63 @@ const UsersManagement: React.FC = () => {
                 <option value="COLABORADOR">Colaborador</option>
                 <option value="ADMINISTRADOR">Administrador</option>
                 <option value="GESTOR_PROYECTOS">Gestor de Proyectos</option>
-                <option value="ANALISTA">Analista</option>
               </Form.Select>
             </Form.Group>
+
+            {availableHabilidades.length > 0 && (
+              <Form.Group className="mb-1">
+                <Form.Label className="d-flex align-items-center gap-2">
+                  <Tag size={14} style={{ color: '#f59e0b' }} /> Habilidades
+                </Form.Label>
+                <div style={{
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '10px',
+                  padding: '0.75rem',
+                  maxHeight: '180px',
+                  overflowY: 'auto',
+                  background: '#fafafa',
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '0.5rem',
+                }}>
+                  {availableHabilidades.map(h => {
+                    const selected = selectedHabilidades.includes(h.id);
+                    return (
+                      <button
+                        key={h.id}
+                        type="button"
+                        onClick={() => toggleHabilidad(h.id)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          padding: '0.3em 0.75em',
+                          borderRadius: '8px',
+                          border: `1.5px solid ${selected ? h.color : '#e2e8f0'}`,
+                          background: selected ? h.color + '22' : '#fff',
+                          color: selected ? h.color : '#64748b',
+                          fontWeight: selected ? 600 : 400,
+                          fontSize: '0.82rem',
+                          cursor: 'pointer',
+                          transition: 'all .15s ease',
+                        }}
+                      >
+                        <span style={{
+                          width: 8, height: 8, borderRadius: '50%',
+                          background: h.color, flexShrink: 0,
+                        }} />
+                        {h.nombre}
+                      </button>
+                    );
+                  })}
+                </div>
+                {selectedHabilidades.length > 0 && (
+                  <div className="mt-1" style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                    {selectedHabilidades.length} habilidad{selectedHabilidades.length > 1 ? 'es' : ''} seleccionada{selectedHabilidades.length > 1 ? 's' : ''}
+                  </div>
+                )}
+              </Form.Group>
+            )}
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={handleClose}>Cancelar</Button>

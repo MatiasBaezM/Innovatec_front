@@ -1,0 +1,287 @@
+/* ── Container ── */
+.gp-container {
+  padding: 2rem 2.5rem;
+  min-height: 100%;
+}
+
+.gp-btn-primary {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding: 0.55rem 1.2rem;
+  transition: opacity 0.2s ease;
+}
+.gp-btn-primary:hover { opacity: 0.9; }
+
+/* ── Table header ── */
+.gp-thead {
+  background: #f8fafc;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+.gp-thead th { font-weight: 600; padding: 1rem 1.25rem; border-bottom: 1px solid #e2e8f0; }
+
+/* ── Action buttons in table ── */
+.gp-action-btn {
+  padding: 0.3rem 0.4rem !important;
+  border-radius: 7px !important;
+  transition: background 0.15s ease !important;
+  color: inherit;
+}
+.gp-tasks-btn  { color: #6366f1 !important; }
+.gp-team-btn   { color: #0ea5e9 !important; }
+.gp-edit-btn   { color: #f59e0b !important; }
+.gp-delete-btn { color: #ef4444 !important; }
+
+.gp-action-btn:hover { background: #f1f5f9 !important; }
+
+/* ── Tasks view ── */
+.gp-tasks-container { display: flex; flex-direction: column; height: 100%; }
+
+.gp-tasks-header {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 1.75rem;
+  flex-wrap: wrap;
+}
+
+.gp-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+.gp-back-btn:hover { border-color: #6366f1; color: #6366f1; }
+
+.gp-project-info { flex: 1; min-width: 0; }
+.gp-project-name { font-size: 1.4rem; font-weight: 800; color: #1e293b; margin: 0; }
+.gp-project-sub  { font-size: 0.8rem; color: #94a3b8; margin: 0; }
+
+/* ── Kanban board ── */
+.gp-kanban {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Kanban column ── */
+.gp-kanban-col {
+  background: #f1f5f9;
+  border-radius: 16px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border: 2px solid transparent;
+}
+
+.gp-col-revisado {
+  background: #f5f3ff;
+  border-color: rgba(139, 92, 246, 0.18);
+}
+
+.gp-col-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.gp-col-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.gp-col-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1e293b;
+  flex: 1;
+}
+
+.gp-col-count {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #94a3b8;
+  background: #e2e8f0;
+  padding: 0.15em 0.55em;
+  border-radius: 99px;
+}
+
+.gp-col-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+.gp-col-body::-webkit-scrollbar { width: 4px; }
+.gp-col-body::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+.gp-col-empty {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.83rem;
+  padding: 1.5rem 0;
+}
+
+/* ── Task card ── */
+.gp-task-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e8ecf1;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.gp-task-card:hover { box-shadow: 0 4px 14px rgba(99, 102, 241, 0.1); transform: translateY(-2px); }
+
+.gp-task-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+
+.gp-task-delete {
+  color: #cbd5e1 !important;
+  padding: 0 !important;
+  line-height: 1;
+}
+.gp-task-delete:hover { color: #ef4444 !important; }
+
+.gp-task-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.35rem;
+  line-height: 1.35;
+}
+
+.gp-task-desc {
+  font-size: 0.78rem;
+  color: #64748b;
+  margin: 0 0 0.65rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+}
+
+.gp-task-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 0.55rem;
+  gap: 0.5rem;
+}
+
+/* ── Correction message ── */
+.gp-correction-msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-left: 3px solid #f97316;
+  border-radius: 6px;
+  padding: 0.5rem 0.6rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.75rem;
+  color: #9a3412;
+  line-height: 1.4;
+}
+.gp-correction-msg svg { flex-shrink: 0; margin-top: 1px; color: #f97316; }
+
+/* ── Validation buttons ── */
+.gp-validation-btns {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.gp-btn-approve,
+.gp-btn-reject {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.38rem 0.6rem;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.gp-btn-approve {
+  background: #d1fae5;
+  color: #065f46;
+}
+.gp-btn-approve:hover { background: #a7f3d0; }
+
+.gp-btn-reject {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.gp-btn-reject:hover { background: #fecaca; }
+
+/* ── Revisado badge ── */
+.gp-revisado-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.6rem;
+  padding: 0.35rem 0.6rem;
+  background: #f5f3ff;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #6b21a8;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+/* ── Responsive ── */
+@media (max-width: 1200px) {
+  .gp-kanban { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 900px) {
+  .gp-container { padding: 1.25rem 1rem; }
+  .gp-kanban { grid-template-columns: 1fr; }
+  .gp-tasks-header { flex-wrap: wrap; }
+}
+
+@media (max-width: 576px) {
+  .gp-project-name { font-size: 1.1rem; }
+  .gp-back-btn span { display: none; }
+}

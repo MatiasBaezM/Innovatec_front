@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Badge } from 'react-bootstrap';
-import { ArrowLeft, FolderKanban } from 'lucide-react';
+import { ArrowLeft, FolderKanban, AlertTriangle, CheckCircle } from 'lucide-react';
 import API_BASE_URL, { API_ENDPOINTS } from '../../config/api';
 import './TaskBoard.css';
 
@@ -10,11 +10,12 @@ interface Tarea {
   proyectoId?: number;
   titulo: string;
   descripcion: string;
-  estado: 'POR_HACER' | 'EN_PROGRESO' | 'COMPLETADO';
+  estado: 'POR_HACER' | 'EN_PROGRESO' | 'COMPLETADO' | 'REVISADO';
   prioridad: 'ALTA' | 'MEDIA' | 'BAJA';
   asignadoId?: number;
   asignadoNombre?: string;
   fechaLimite?: string;
+  mensajeCorreccion?: string;
 }
 
 interface Proyecto {
@@ -40,10 +41,11 @@ const ESTADO_PROYECTO_CONFIG: Record<string, { label: string; color: string; bg:
   FINALIZADO:  { label: 'Finalizado',  color: '#065f46', bg: '#d1fae5' },
 };
 
-const COLUMNAS: { key: Tarea['estado']; label: string; color: string }[] = [
+const COLUMNAS: { key: Tarea['estado']; label: string; color: string; readonly?: boolean }[] = [
   { key: 'POR_HACER',   label: 'Por Hacer',   color: '#64748b' },
   { key: 'EN_PROGRESO', label: 'En Progreso', color: '#6366f1' },
   { key: 'COMPLETADO',  label: 'Completado',  color: '#10b981' },
+  { key: 'REVISADO',    label: 'Revisado',    color: '#8b5cf6', readonly: true },
 ];
 
 function getInitials(nombre: string) {
@@ -55,25 +57,42 @@ interface TareaCardProps {
   isDragging: boolean;
   onDragStart: (e: React.DragEvent, id: number) => void;
   onDragEnd: () => void;
+  draggable?: boolean;
 }
 
-const TareaCard: React.FC<TareaCardProps> = ({ tarea, isDragging, onDragStart, onDragEnd }) => {
+const TareaCard: React.FC<TareaCardProps> = ({
+  tarea, isDragging, onDragStart, onDragEnd, draggable = true,
+}) => {
   const p = PRIORIDAD_CONFIG[tarea.prioridad];
   return (
     <div
-      className={`tb-task-card ${isDragging ? 'dragging' : ''}`}
-      draggable
-      onDragStart={e => onDragStart(e, tarea.id)}
-      onDragEnd={onDragEnd}
+      className={`tb-task-card ${isDragging ? 'dragging' : ''} ${!draggable ? 'tb-task-readonly' : ''}`}
+      draggable={draggable}
+      onDragStart={draggable ? e => onDragStart(e, tarea.id) : undefined}
+      onDragEnd={draggable ? onDragEnd : undefined}
     >
       <div className="tb-task-header">
         <Badge className="tb-prioridad-badge" style={{ backgroundColor: p.bg, color: p.color }}>
           {p.label}
         </Badge>
-        <div className="tb-drag-handle" title="Arrastrar">
-          <span /><span /><span />
-        </div>
+        {draggable && (
+          <div className="tb-drag-handle" title="Arrastrar">
+            <span /><span /><span />
+          </div>
+        )}
+        {!draggable && (
+          <CheckCircle size={16} color="#8b5cf6" />
+        )}
       </div>
+
+      {/* Mensaje de corrección (visible cuando la tarea fue rechazada) */}
+      {tarea.mensajeCorreccion && tarea.estado === 'POR_HACER' && (
+        <div className="tb-correction-msg">
+          <AlertTriangle size={13} />
+          <span>{tarea.mensajeCorreccion}</span>
+        </div>
+      )}
+
       <p className="tb-task-title">{tarea.titulo}</p>
       <p className="tb-task-desc">{tarea.descripcion}</p>
       <div className="tb-task-footer">
@@ -161,6 +180,9 @@ const TaskBoard: React.FC = () => {
 
   const handleDrop = (e: React.DragEvent, colKey: Tarea['estado']) => {
     e.preventDefault();
+    // REVISADO es de solo lectura: el colaborador no puede arrastrar tareas ahí
+    if (colKey === 'REVISADO') return;
+
     const tareaId = Number(e.dataTransfer.getData('tareaId'));
     if (!tareaId) return;
 
@@ -173,7 +195,9 @@ const TaskBoard: React.FC = () => {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
 
-    const tareaActualizada = { ...tarea, estado: colKey };
+    // Al mover de vuelta a COMPLETADO, limpiar mensaje de corrección
+    const mensajeCorreccion = colKey === 'COMPLETADO' ? undefined : tarea.mensajeCorreccion;
+    const tareaActualizada = { ...tarea, estado: colKey, mensajeCorreccion };
 
     setTareas(prev => prev.map(t => t.id === tareaId ? tareaActualizada : t));
     setDraggedId(null);
@@ -185,7 +209,6 @@ const TaskBoard: React.FC = () => {
       headers,
       body: JSON.stringify(tareaActualizada),
     }).catch(() => {
-      // Revertir si la API falla
       setTareas(prev => prev.map(t => t.id === tareaId ? tarea : t));
     });
   };
@@ -234,18 +257,19 @@ const TaskBoard: React.FC = () => {
         )}
       </div>
 
-      <div className="tb-board">
+      <div className="tb-board tb-board-4col">
         {COLUMNAS.map(col => {
           const colTareas = tareasPorEstado(col.key);
-          const isOver = overCol === col.key;
+          const isOver = overCol === col.key && !col.readonly;
+          const isReadonly = col.readonly;
           return (
             <div
               key={col.key}
-              className={`tb-column ${isOver ? 'drop-target' : ''}`}
-              onDragEnter={e => handleColDragEnter(e, col.key)}
-              onDragOver={handleColDragOver}
-              onDragLeave={e => handleColDragLeave(e, col.key)}
-              onDrop={e => handleDrop(e, col.key)}
+              className={`tb-column ${isOver ? 'drop-target' : ''} ${isReadonly ? 'tb-col-readonly' : ''}`}
+              onDragEnter={isReadonly ? undefined : e => handleColDragEnter(e, col.key)}
+              onDragOver={isReadonly ? undefined : handleColDragOver}
+              onDragLeave={isReadonly ? undefined : e => handleColDragLeave(e, col.key)}
+              onDrop={isReadonly ? undefined : e => handleDrop(e, col.key)}
             >
               <div className="tb-col-header">
                 <div className="tb-col-dot" style={{ background: col.color }} />
@@ -268,6 +292,7 @@ const TaskBoard: React.FC = () => {
                       isDragging={draggedId === t.id}
                       onDragStart={handleDragStart}
                       onDragEnd={handleDragEnd}
+                      draggable={!isReadonly}
                     />
                   ))
                 )}
