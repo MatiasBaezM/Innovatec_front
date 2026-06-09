@@ -13,7 +13,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isHidden, toggleSidebar: _toggleSideb
   const location = useLocation();
 
   const menuItems = [
-    { path: '/', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
+    { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
     { path: '/usuarios', label: 'Usuarios', icon: <Users size={20} /> },
     { path: '/proyectos', label: 'Proyectos', icon: <FolderKanban size={20} /> },
     { path: '/analiticas', label: 'Analíticas', icon: <TrendingUp size={20} /> },

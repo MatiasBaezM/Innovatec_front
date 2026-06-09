@@ -56,7 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const isAdmin = () => {
-    if (!userInfo) return true; // token no decodificable → modo dev (admin)
+    if (!userInfo) return false;
     return ['ADMINISTRADOR', 'GESTOR_PROYECTOS'].includes(userInfo.rol);
   };
 

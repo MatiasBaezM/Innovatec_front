@@ -3,8 +3,10 @@ import { Form, Button, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../../config/api';
 import { formatRut, validateRut } from '../../utils/rutUtils';
-import { getRoleFromToken } from '../../context/AuthContext';
+import { getRoleFromToken, useAuth } from '../../context/AuthContext';
 import './Login.css';
+
+const ADMIN_ROLES = ['ADMINISTRADOR', 'GESTOR_PROYECTOS'];
 
 const Login: React.FC = () => {
   const [rut, setRut] = useState('');
@@ -12,6 +14,15 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { refreshUser } = useAuth();
+
+  React.useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      const rol = getRoleFromToken();
+      navigate(rol && ADMIN_ROLES.includes(rol) ? '/dashboard' : '/user', { replace: true });
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,13 +50,11 @@ const Login: React.FC = () => {
 
       const data = await response.json();
 
-      // Guardamos el token en localStorage
       localStorage.setItem('token', data.token);
+      refreshUser(); // sincroniza AuthContext antes de navegar
 
-      // Redirigimos según el rol del usuario
       const rol = getRoleFromToken();
-      const isAdmin = rol && ['ADMINISTRADOR', 'GESTOR_PROYECTOS'].includes(rol);
-      navigate(isAdmin ? '/' : '/user');
+      navigate(rol && ADMIN_ROLES.includes(rol) ? '/dashboard' : '/user');
     } catch (err: any) {
       setError(err.message || 'Error al conectar con el servidor');
     } finally {
@@ -94,8 +103,17 @@ const Login: React.FC = () => {
               type="button"
               className="btn btn-link text-decoration-none text-light opacity-75"
               onClick={() => {
-                localStorage.setItem('token', 'provisional-dev-token');
-                navigate('/');
+                const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
+                  .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+                const payload = btoa(JSON.stringify({
+                  sub: '11.111.111-1',
+                  nombre: 'Administrador Demo',
+                  rol: 'ADMINISTRADOR',
+                  iat: Math.floor(Date.now() / 1000),
+                  exp: Math.floor(Date.now() / 1000) + 36000,
+                })).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+                localStorage.setItem('token', `${header}.${payload}.dev-signature`);
+                navigate('/dashboard');
               }}
             >
               Acceso Provisorio Admin

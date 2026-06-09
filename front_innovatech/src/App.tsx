@@ -11,44 +11,36 @@ import UserDashboard from './components/User/UserDashboard'
 import UserProjects from './components/User/UserProjects'
 import UserProfile from './components/User/UserProfile'
 import TaskBoard from './components/User/TaskBoard'
-import { useAuth } from './context/AuthContext'
+import { getRoleFromToken } from './context/AuthContext'
 import './App.css'
+
+const ADMIN_ROLES = ['ADMINISTRADOR', 'GESTOR_PROYECTOS'];
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const token = localStorage.getItem('token');
   const location = useLocation();
-
-  if (!token) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
+  if (!token) return <Navigate to="/login" state={{ from: location }} replace />;
   return <>{children}</>;
 };
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAdmin } = useAuth();
   const token = localStorage.getItem('token');
   const location = useLocation();
-
-  if (!token) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  if (!isAdmin()) {
-    return <Navigate to="/user" replace />;
-  }
-
+  if (!token) return <Navigate to="/login" state={{ from: location }} replace />;
+  const rol = getRoleFromToken();
+  if (!rol || !ADMIN_ROLES.includes(rol)) return <Navigate to="/user" replace />;
   return <>{children}</>;
 };
 
 function App() {
   return (
     <Routes>
+      <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<Login />} />
 
       {/* Rutas de administrador */}
       <Route
-        path="/"
+        path="/dashboard"
         element={
           <AdminRoute>
             <AdminLayout>
@@ -140,7 +132,7 @@ function App() {
         }
       />
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   )
 }
