@@ -5,12 +5,20 @@ import { API_ENDPOINTS } from '../../config/api';
 import API_BASE_URL from '../../config/api';
 import './ProjectsManagement.css';
 
+interface Colaborador {
+  id: number;
+  nombre: string;
+}
+
 interface Proyecto {
   id?: number;
   nombre: string;
   descripcion: string;
   estado: string;
   fechaInicio: string;
+  gestorId?: number | null;
+  gestorNombre?: string | null;
+  colaboradores?: Colaborador[];
 }
 
 interface Tarea {
@@ -181,8 +189,8 @@ const ProjectsManagement: React.FC = () => {
     setSelectedProjectForTeam(project);
     setShowTeamModal(true);
     setSelectedUserId('');
-    setSelectedGestorId('');
-    setAssignedTeam([]);
+    setSelectedGestorId(project.gestorId ? String(project.gestorId) : '');
+    setAssignedTeam(project.colaboradores ? [...project.colaboradores] : []);
     setMessage({ type: '', text: '' });
     try {
       const res = await fetch(API_ENDPOINTS.AUTH.USERS);
@@ -198,17 +206,6 @@ const ProjectsManagement: React.FC = () => {
       setAvailableUsers([{ id: 1, nombre: 'Juan Pérez' }, { id: 2, nombre: 'María Silva' }]);
       setAvailableGestores([{ id: 10, nombre: 'Gestor Demo' }]);
     }
-    try {
-      const r = await fetch(`${API_ENDPOINTS.RESOURCES.TEAMS}/proyecto/${project.id}`);
-      if (r.ok) {
-        const text = await r.text();
-        if (text) {
-          const d = JSON.parse(text);
-          if (d?.trabajadores?.length) setAssignedTeam(d.trabajadores);
-          if (d?.gestorId) setSelectedGestorId(String(d.gestorId));
-        }
-      }
-    } catch {}
   };
 
   const handleAddUserToTeamList = () => {
@@ -222,27 +219,30 @@ const ProjectsManagement: React.FC = () => {
     setAssignedTeam(assignedTeam.filter(u => u.id.toString() !== userId.toString()));
 
   const handleAssignTeam = async () => {
-    if (!selectedProjectForTeam || assignedTeam.length === 0) {
-      setMessage({ type: 'danger', text: 'Debe agregar al menos un colaborador al equipo' }); return;
+    if (!selectedProjectForTeam) return;
+    if (assignedTeam.length === 0 && !selectedGestorId) {
+      setMessage({ type: 'danger', text: 'Debe asignar al menos un gestor o colaborador al equipo' }); return;
     }
     setLoading(true);
     try {
       const gestor = availableGestores.find(g => g.id.toString() === selectedGestorId);
       const payload = {
-        nombre: `Equipo de ${selectedProjectForTeam.nombre}`,
-        descripcion: `Equipo asignado para el proyecto: ${selectedProjectForTeam.nombre}`,
-        proyectoId: selectedProjectForTeam.id,
         gestorId: gestor?.id ?? null,
         gestorNombre: gestor?.nombre ?? null,
-        trabajadores: assignedTeam.map(u => ({ id: u.id })),
+        colaboradores: assignedTeam.map(u => ({ id: u.id, nombre: u.nombre })),
       };
-      const response = await fetch(API_ENDPOINTS.RESOURCES.TEAMS, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_ENDPOINTS.PROJECTS.BASE}/${selectedProjectForTeam.id}/equipo`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
       });
       if (!response.ok) throw new Error('No se pudo guardar el equipo');
+      const updated: Proyecto = await response.json();
+      setProjects(prev => prev.map(p => p.id === updated.id ? updated : p));
       await fetch(API_ENDPOINTS.PROJECTS.ACTIVITIES, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ titulo: `Equipo conformado: ${assignedTeam.length} colaboradores para "${selectedProjectForTeam.nombre}"` }),
+        body: JSON.stringify({ titulo: `Equipo actualizado: ${assignedTeam.length} colaboradores para "${selectedProjectForTeam.nombre}"` }),
       }).catch(() => {});
       setMessage({ type: 'success', text: 'Equipo guardado correctamente' });
       setTimeout(() => { setShowTeamModal(false); setMessage({ type: '', text: '' }); }, 1500);
@@ -552,7 +552,7 @@ const ProjectsManagement: React.FC = () => {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowTeamModal(false)}>Cerrar</Button>
-          <Button variant="primary" onClick={handleAssignTeam} disabled={loading || assignedTeam.length === 0} className="modal-btn">
+          <Button variant="primary" onClick={handleAssignTeam} disabled={loading || (assignedTeam.length === 0 && !selectedGestorId)} className="modal-btn">
             {loading ? 'Guardando...' : 'Guardar Equipo'}
           </Button>
         </Modal.Footer>

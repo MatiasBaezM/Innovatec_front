@@ -5,23 +5,18 @@ import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../../config/api';
 import './UserProjects.css';
 
-interface Proyecto {
-  id: number;
-  nombre: string;
-  descripcion: string;
-  estado: string;
-}
-
 interface Colaborador {
   id: number;
   nombre: string;
   rol?: string;
 }
 
-interface Equipo {
+interface Proyecto {
   id: number;
-  proyectoId: number;
-  colaboradores: Colaborador[];
+  nombre: string;
+  descripcion: string;
+  estado: string;
+  colaboradores?: Colaborador[];
 }
 
 const ESTADO_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
@@ -43,14 +38,6 @@ const MOCK: Proyecto[] = [
   { id: 3, nombre: 'Integración ERP',     descripcion: 'Integración del sistema ERP con el portal interno.',           estado: 'FINALIZADO' },
   { id: 4, nombre: 'Portal de Empleados', descripcion: 'Portal centralizado para la gestión del personal.',             estado: 'EN_PROGRESO' },
   { id: 5, nombre: 'Migración de Datos',  descripcion: 'Migración del historial de datos al nuevo sistema.',            estado: 'INICIO' },
-];
-
-const MOCK_EQUIPOS: Equipo[] = [
-  { id: 1, proyectoId: 1, colaboradores: [{ id: 1, nombre: 'Ana García', rol: 'Desarrolladora' }, { id: 2, nombre: 'Luis Morales', rol: 'Arquitecto' }, { id: 3, nombre: 'Carla Ruiz', rol: 'Diseñadora' }] },
-  { id: 2, proyectoId: 2, colaboradores: [{ id: 4, nombre: 'Pedro Silva', rol: 'Desarrollador' }, { id: 5, nombre: 'María López', rol: 'QA' }] },
-  { id: 3, proyectoId: 3, colaboradores: [{ id: 1, nombre: 'Ana García', rol: 'Desarrolladora' }, { id: 6, nombre: 'Jorge Díaz', rol: 'DBA' }] },
-  { id: 4, proyectoId: 4, colaboradores: [{ id: 2, nombre: 'Luis Morales', rol: 'Arquitecto' }, { id: 4, nombre: 'Pedro Silva', rol: 'Desarrollador' }, { id: 7, nombre: 'Sofía Herrera', rol: 'PM' }] },
-  { id: 5, proyectoId: 5, colaboradores: [{ id: 3, nombre: 'Carla Ruiz', rol: 'Diseñadora' }] },
 ];
 
 function getInitials(nombre: string) {
@@ -109,7 +96,6 @@ const MembersModal: React.FC<MembersModalProps> = ({ proyecto, colaboradores, on
 const UserProjects: React.FC = () => {
   const navigate = useNavigate();
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
-  const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [busqueda, setBusqueda] = useState('');
   const [filtroEstado, setFiltroEstado] = useState('');
   const [loading, setLoading] = useState(true);
@@ -119,17 +105,11 @@ const UserProjects: React.FC = () => {
     const token = localStorage.getItem('token');
     const headers = { Authorization: `Bearer ${token}` };
 
-    Promise.all([
-      fetch(API_ENDPOINTS.PROJECTS.BASE, { headers })
-        .then(r => r.ok ? r.json() : Promise.reject())
-        .catch(() => MOCK),
-      fetch(API_ENDPOINTS.RESOURCES.TEAMS, { headers })
-        .then(r => r.ok ? r.json() : Promise.reject())
-        .catch(() => MOCK_EQUIPOS),
-    ]).then(([pData, eData]) => {
-      setProyectos(pData);
-      setEquipos(eData);
-    }).finally(() => setLoading(false));
+    fetch(API_ENDPOINTS.PROJECTS.BASE, { headers })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(setProyectos)
+      .catch(() => setProyectos(MOCK))
+      .finally(() => setLoading(false));
   }, []);
 
   const proyectosFiltrados = proyectos.filter(p => {
@@ -141,7 +121,7 @@ const UserProjects: React.FC = () => {
   });
 
   const getEquipo = (proyectoId: number): Colaborador[] =>
-    equipos.find(e => e.proyectoId === proyectoId)?.colaboradores ?? [];
+    proyectos.find(p => p.id === proyectoId)?.colaboradores ?? [];
 
   const abrirModal = (e: React.MouseEvent, proyecto: Proyecto) => {
     e.stopPropagation();
