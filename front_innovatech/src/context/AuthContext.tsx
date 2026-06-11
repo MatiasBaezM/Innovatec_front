@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export interface UserInfo {
+  id?: number;
   rut: string;
   nombre: string;
   rol: string;
@@ -31,6 +32,7 @@ function decodeToken(token: string): UserInfo | null {
       payload.rol || payload.roles?.[0] || payload.role || 'COLABORADOR'
     ).toString().toUpperCase();
     return {
+      id: typeof payload.id === 'number' ? payload.id : undefined,
       rut: payload.sub || payload.rut || '',
       nombre: payload.nombre || payload.name || payload.sub || 'Usuario',
       rol,
