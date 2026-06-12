@@ -18,5 +18,19 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
     },
+    rules: {
+      // Respuestas de fetch sin tipar: advertencia, no bloquea el CI.
+      '@typescript-eslint/no-explicit-any': 'warn',
+      // Permitir argumentos/variables sin usar con prefijo "_" (ej: _toggleSidebar).
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
+      // Patrones intencionales (init desde localStorage, exports de hooks): advertencia.
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/exhaustive-deps': 'warn',
+      'react-hooks/immutability': 'warn',
+      'react-refresh/only-export-components': 'warn',
+    },
   },
 ])

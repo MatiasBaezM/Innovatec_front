@@ -353,7 +353,7 @@ const ProjectsManagement: React.FC = () => {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(updated),
       });
-    } catch {}
+    } catch { /* UI optimista: el estado ya se actualizo, se ignora el fallo de red */ }
   };
 
   const openRejection = (tarea: Tarea) => {
@@ -373,7 +373,7 @@ const ProjectsManagement: React.FC = () => {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(updated),
       });
-    } catch {}
+    } catch { /* UI optimista: el estado ya se actualizo, se ignora el fallo de red */ }
   };
 
   const getStatusVariant = (estado: string) => {

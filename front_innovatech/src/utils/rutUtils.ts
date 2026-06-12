@@ -1,6 +1,6 @@
 export const formatRut = (rut: string): string => {
   // Eliminar caracteres no válidos
-  let value = rut.replace(/[^0-9kK]/g, '').toUpperCase();
+  const value = rut.replace(/[^0-9kK]/g, '').toUpperCase();
   if (value.length === 0) return '';
   
   // Separar cuerpo y dígito verificador si la longitud es mayor a 1

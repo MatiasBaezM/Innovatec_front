@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local env files (la URL de prod se inyecta desde el workflow de deploy)
+.env
+.env.production
+.env.local

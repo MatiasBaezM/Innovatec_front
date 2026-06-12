@@ -241,7 +241,7 @@ const GestorTaskBoard: React.FC = () => {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(updated),
       });
-    } catch {}
+    } catch { /* UI optimista: el estado ya se actualizo, se ignora el fallo de red */ }
   };
 
   const handleRejection = async () => {
@@ -257,7 +257,7 @@ const GestorTaskBoard: React.FC = () => {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(updated),
       });
-    } catch {}
+    } catch { /* UI optimista: el estado ya se actualizo, se ignora el fallo de red */ }
   };
 
   const tareasPorEstado = (estado: Tarea['estado']) => tareas.filter(t => t.estado === estado);
