@@ -45,9 +45,14 @@ const UsersManagement: React.FC = () => {
     fetchUsers();
   }, []);
 
+  const authHeaders = (): Record<string, string> => {
+    const token = localStorage.getItem('token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
   const fetchUsers = async () => {
     try {
-      const response = await fetch(API_ENDPOINTS.AUTH.USERS);
+      const response = await fetch(API_ENDPOINTS.AUTH.USERS, { headers: authHeaders() });
       const data = await response.json();
       // Ordenamos alfabéticamente por nombre por defecto
       const sortedData = data.sort((a: any, b: any) => a.nombre.localeCompare(b.nombre));
@@ -115,7 +120,7 @@ const UsersManagement: React.FC = () => {
     try {
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify(currentUser),
       });
 
@@ -142,7 +147,7 @@ const UsersManagement: React.FC = () => {
   const handleDelete = async () => {
     if (userToDelete === null) return;
     try {
-      await fetch(`${API_ENDPOINTS.AUTH.USERS}/${userToDelete}`, { method: 'DELETE' });
+      await fetch(`${API_ENDPOINTS.AUTH.USERS}/${userToDelete}`, { method: 'DELETE', headers: authHeaders() });
       fetchUsers();
     } catch (error) {
       console.error('Error deleting user:', error);

@@ -193,7 +193,8 @@ const ProjectsManagement: React.FC = () => {
     setAssignedTeam(project.colaboradores ? [...project.colaboradores] : []);
     setMessage({ type: '', text: '' });
     try {
-      const res = await fetch(API_ENDPOINTS.AUTH.USERS);
+      const token = localStorage.getItem('token');
+      const res = await fetch(API_ENDPOINTS.AUTH.USERS, { headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) {
         const all = await res.json();
         setAvailableUsers(all.filter((u: any) => u.rol === 'COLABORADOR'));
@@ -271,7 +272,8 @@ const ProjectsManagement: React.FC = () => {
 
     // Cargar usuarios disponibles para asignar
     try {
-      const res = await fetch(API_ENDPOINTS.AUTH.USERS);
+      const token = localStorage.getItem('token');
+      const res = await fetch(API_ENDPOINTS.AUTH.USERS, { headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) {
         const all = await res.json();
         setTaskUsers(all.filter((u: any) => u.rol === 'COLABORADOR'));

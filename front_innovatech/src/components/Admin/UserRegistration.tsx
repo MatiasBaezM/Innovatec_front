@@ -35,10 +35,12 @@ const UserRegistration: React.FC = () => {
     setMessage({ type: '', text: '' });
 
     try {
-      const response = await fetch('http://localhost:8080/auth/register', {
+      const token = localStorage.getItem('token');
+      const response = await fetch(API_ENDPOINTS.AUTH.REGISTER, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(formData),
       });

@@ -51,6 +51,6 @@ Remove-Item $policyFile
 Write-Host "`nListo. URL del sitio (hosting estatico S3, HTTP):"
 Write-Host "  http://$BUCKET_NAME.s3-website-$REGION.amazonaws.com"
 Write-Host "`nSiguiente paso:"
-Write-Host "  1. Actualizar VITE_BACKEND_URL en .env.production con la URL del"
-Write-Host "     Load Balancer del backend (kubectl get svc ms-api-gateway -n innovatech)"
+Write-Host "  1. Definir VITE_BACKEND_URL (variable de entorno o .env.production local)"
+Write-Host "     con la URL del Load Balancer (kubectl get svc ms-api-gateway -n innovatech)"
 Write-Host "  2. Correr ./02-build-and-deploy.ps1"

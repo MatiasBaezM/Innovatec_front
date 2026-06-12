@@ -3,9 +3,11 @@
 # Requisitos: Node.js/npm instalados, AWS CLI v2 configurado y bucket ya
 # creado (ver 01-create-bucket.ps1).
 #
-# IMPORTANTE: antes de correr este script, actualiza .env.production con la
-# URL real del Load Balancer del backend:
-#   VITE_BACKEND_URL=http://<LOAD_BALANCER_URL>
+# IMPORTANTE: el build necesita la URL real del Load Balancer del backend.
+# Definila de una de estas dos formas antes de correr el script:
+#   a) variable de entorno:  $env:VITE_BACKEND_URL = "http://<LOAD_BALANCER_URL>"
+#   b) archivo .env.production en la raiz del proyecto (no esta versionado):
+#        VITE_BACKEND_URL=http://<LOAD_BALANCER_URL>
 #
 # Uso (desde cualquier ubicacion, el script resuelve la raiz del proyecto solo):
 #   ./infra/s3/02-build-and-deploy.ps1
@@ -16,6 +18,14 @@ $REGION      = "us-east-1"
 $BUCKET_NAME = "innovatech-frontend"
 
 $projectRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
+
+# Sin VITE_BACKEND_URL el bundle queda con API_BASE_URL='' y el sitio en S3
+# llamaria a la API contra si mismo. Cortar aca antes de publicar algo roto.
+$envProdFile = Join-Path $projectRoot ".env.production"
+if (-not $env:VITE_BACKEND_URL -and -not (Test-Path $envProdFile)) {
+    throw ("Falta VITE_BACKEND_URL. Defini la variable de entorno o crea " +
+           "$envProdFile con: VITE_BACKEND_URL=http://<LOAD_BALANCER_URL>")
+}
 
 Push-Location $projectRoot
 try {
