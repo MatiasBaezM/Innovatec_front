@@ -101,34 +101,6 @@ const Login: React.FC = () => {
           <Button variant="primary" type="submit" className="w-100 login-btn" disabled={loading}>
             {loading ? 'Cargando...' : 'Iniciar Sesión'}
           </Button>
-
-          <div className="text-center mt-3 d-flex flex-column gap-1">
-            {[
-              { label: 'Acceso Demo — Admin',      rol: 'ADMINISTRADOR',    rut: '11.111.111-1', nombre: 'Admin Demo',   path: '/dashboard', opacity: '0.85' },
-              { label: 'Acceso Demo — Gestor',     rol: 'GESTOR_PROYECTOS', rut: '22.222.222-2', nombre: 'Gestor Demo',  path: '/gestor',    opacity: '0.65' },
-              { label: 'Acceso Demo — Colaborador',rol: 'COLABORADOR',      rut: '33.333.333-3', nombre: 'Colab Demo',   path: '/user',      opacity: '0.45' },
-            ].map(({ label, rol, rut: demoRut, nombre, path, opacity }) => (
-              <button
-                key={rol}
-                type="button"
-                className="btn btn-link text-decoration-none text-light"
-                style={{ opacity }}
-                onClick={() => {
-                  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
-                    .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
-                  const payload = btoa(JSON.stringify({
-                    sub: demoRut, nombre, rol,
-                    iat: Math.floor(Date.now() / 1000),
-                    exp: Math.floor(Date.now() / 1000) + 86400,
-                  })).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
-                  localStorage.setItem('token', `${header}.${payload}.dev-signature`);
-                  navigate(path);
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
         </Form>
       </div>
     </div>
