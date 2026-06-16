@@ -3,7 +3,8 @@ import { Row, Col, Card, Badge } from 'react-bootstrap';
 import { User, Shield, Hash, Activity, Tag } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { API_ENDPOINTS } from '../../config/api';
-import { type Habilidad, loadSkillsFromStorage, loadUserSkillIds } from '../../utils/skillsUtils';
+import { type Habilidad, fetchUserSkills } from '../../utils/skillsUtils';
+import ChangePasswordCard from '../common/ChangePasswordCard';
 import './UserProfile.css';
 
 interface Actividad {
@@ -34,9 +35,7 @@ const UserProfile: React.FC = () => {
       .catch(() => setActividades([]));
 
     if (userInfo?.id) {
-      const allSkills = loadSkillsFromStorage();
-      const ids = loadUserSkillIds(userInfo.id);
-      setMisHabilidades(allSkills.filter(s => ids.includes(s.id)));
+      fetchUserSkills(userInfo.id).then(setMisHabilidades);
     }
   }, [userInfo?.id]);
 
@@ -168,6 +167,11 @@ const UserProfile: React.FC = () => {
               )}
             </Card.Body>
           </Card>
+
+          {/* Cambio de contraseña */}
+          <div className="mt-4">
+            <ChangePasswordCard />
+          </div>
         </Col>
       </Row>
     </div>

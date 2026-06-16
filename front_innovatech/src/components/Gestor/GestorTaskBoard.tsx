@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Badge, Modal, Form, Button, Alert, Row, Col } from 'react-bootstrap';
-import { ArrowLeft, FolderKanban, CheckCircle, XCircle, AlertTriangle, Plus } from 'lucide-react';
+import { ArrowLeft, FolderKanban, CheckCircle, XCircle, AlertTriangle, Plus, Flag } from 'lucide-react';
 import API_BASE_URL, { API_ENDPOINTS } from '../../config/api';
+import { pushNotificacion } from '../../utils/notificationsUtils';
 import '../User/TaskBoard.css';
 
 interface Tarea {
@@ -16,6 +17,7 @@ interface Tarea {
   asignadoNombre?: string;
   fechaCreacion?: string;
   fechaLimite?: string;
+  horasEstimadas?: number;
   mensajeCorreccion?: string;
 }
 
@@ -58,6 +60,7 @@ function emptyForm(proyectoId: number) {
     descripcion: '',
     fechaCreacion: hoy(),
     fechaLimite: '',
+    horasEstimadas: 0,
     asignadoId: 0,
     asignadoNombre: '',
     prioridad: 'MEDIA' as Tarea['prioridad'],
@@ -94,6 +97,9 @@ const GestorTaskBoard: React.FC = () => {
   const [rejectionModal, setRejectionModal] = useState<{
     open: boolean; tarea: Tarea | null; mensaje: string;
   }>({ open: false, tarea: null, mensaje: '' });
+
+  // Finalización del proyecto
+  const [finalizeMsg, setFinalizeMsg] = useState({ type: '', text: '' });
 
   // ── Carga inicial ─────────────────────────────────────────────
   useEffect(() => {
@@ -190,6 +196,8 @@ const GestorTaskBoard: React.FC = () => {
     if (name === 'asignadoId') {
       const colab = colaboradores.find(c => c.id.toString() === value);
       setTaskForm(prev => ({ ...prev, asignadoId: Number(value), asignadoNombre: colab?.nombre ?? '' }));
+    } else if (name === 'horasEstimadas') {
+      setTaskForm(prev => ({ ...prev, horasEstimadas: Number(value) }));
     } else {
       setTaskForm(prev => ({ ...prev, [name]: value }));
     }
@@ -265,6 +273,34 @@ const GestorTaskBoard: React.FC = () => {
     ? (ESTADO_PROYECTO_CONFIG[proyecto.estado] ?? ESTADO_PROYECTO_CONFIG.INICIO)
     : null;
 
+  // ── Finalizar proyecto ────────────────────────────────────────
+  const todasRevisadas = tareas.length > 0 && tareas.every(t => t.estado === 'REVISADO');
+  const yaFinalizado = proyecto?.estado === 'FINALIZADO';
+
+  const handleFinalizarProyecto = async () => {
+    if (!proyecto || !todasRevisadas || yaFinalizado) return;
+    const actualizado = { ...proyecto, estado: 'FINALIZADO' };
+    setProyecto(actualizado);
+
+    const token = localStorage.getItem('token');
+    try {
+      await fetch(`${API_BASE_URL}/api/proyectos/${proyectoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify(actualizado),
+      });
+    } catch { /* UI optimista: el estado ya se actualizo, se ignora el fallo de red */ }
+
+    // Registra la actividad y notifica al administrador
+    fetch(API_ENDPOINTS.PROJECTS.ACTIVITIES, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ titulo: `Proyecto "${proyecto.nombre}" finalizado: todas las tareas fueron revisadas` }),
+    }).catch(() => {});
+    pushNotificacion(`Proyecto "${proyecto.nombre}" finalizado por el gestor`);
+
+    setFinalizeMsg({ type: 'success', text: 'Proyecto marcado como finalizado. El administrador será notificado.' });
+  };
+
   // ─────────────────────────────────────────────────────────────
   return (
     <div className="task-board">
@@ -293,6 +329,29 @@ const GestorTaskBoard: React.FC = () => {
           </Badge>
         )}
 
+        {/* Botón Finalizar Proyecto */}
+        {!yaFinalizado && (
+          <button
+            onClick={handleFinalizarProyecto}
+            disabled={!todasRevisadas}
+            title={todasRevisadas
+              ? 'Marcar el proyecto como finalizado'
+              : 'Todas las tareas deben estar revisadas para finalizar el proyecto'}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '0.4rem',
+              padding: '0.5rem 1.1rem',
+              background: todasRevisadas ? 'linear-gradient(135deg,#10b981,#059669)' : '#e2e8f0',
+              color: todasRevisadas ? '#fff' : '#94a3b8',
+              border: 'none', borderRadius: '10px',
+              fontWeight: 600, fontSize: '0.88rem',
+              cursor: todasRevisadas ? 'pointer' : 'not-allowed',
+              flexShrink: 0, transition: 'opacity .2s',
+            }}
+          >
+            <Flag size={16} /> Finalizar Proyecto
+          </button>
+        )}
+
         {/* Botón Nueva Tarea */}
         <button
           className="tb-new-task-btn"
@@ -311,6 +370,12 @@ const GestorTaskBoard: React.FC = () => {
           <Plus size={16} /> Nueva Tarea
         </button>
       </div>
+
+      {finalizeMsg.text && (
+        <Alert variant={finalizeMsg.type} className="mb-3" onClose={() => setFinalizeMsg({ type: '', text: '' })} dismissible>
+          {finalizeMsg.text}
+        </Alert>
+      )}
 
       {/* ── Kanban 4 columnas ── */}
       <div className="tb-board tb-board-4col">
@@ -387,6 +452,9 @@ const GestorTaskBoard: React.FC = () => {
                               {new Date(tarea.fechaLimite).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}
                             </span>
                           )}
+                          {tarea.horasEstimadas ? (
+                            <span className="tb-fecha">{tarea.horasEstimadas} h</span>
+                          ) : null}
                         </div>
 
                         {tarea.estado === 'COMPLETADO' && (
@@ -508,6 +576,20 @@ const GestorTaskBoard: React.FC = () => {
                     <option value="MEDIA">Media</option>
                     <option value="BAJA">Baja</option>
                   </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col sm={6}>
+                <Form.Group>
+                  <Form.Label>Horas estimadas <span className="text-danger">*</span></Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="horasEstimadas"
+                    value={taskForm.horasEstimadas || ''}
+                    onChange={handleTaskFormChange}
+                    required
+                    min={1}
+                    placeholder="Ej: 8"
+                  />
                 </Form.Group>
               </Col>
             </Row>

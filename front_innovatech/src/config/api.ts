@@ -13,6 +13,8 @@ export const API_ENDPOINTS = {
     USERS:    `${API_BASE_URL}/auth/users`,
     VALIDATE: `${API_BASE_URL}/auth/validate`,
     ME:       `${API_BASE_URL}/auth/me`,
+    // Habilidades asignadas a un usuario (GET lista, PUT reemplaza)
+    USER_SKILLS: (id: number | string) => `${API_BASE_URL}/auth/users/${id}/habilidades`,
   },
   PROJECTS: {
     BASE:       `${API_BASE_URL}/api/proyectos`,
@@ -25,6 +27,10 @@ export const API_ENDPOINTS = {
   },
   ANALYTICS: {
     BASE: `${API_BASE_URL}/api/analiticas`,
+  },
+  // Catálogo de habilidades (gestionado por ADMINISTRADOR)
+  HABILIDADES: {
+    BASE: `${API_BASE_URL}/api/habilidades`,
   },
 };
 

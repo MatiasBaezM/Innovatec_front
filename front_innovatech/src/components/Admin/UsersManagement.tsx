@@ -5,8 +5,8 @@ import { API_ENDPOINTS } from '../../config/api';
 import { formatRut, validateRut } from '../../utils/rutUtils';
 import {
   type Habilidad,
-  loadSkillsFromStorage,
-  loadUserSkillIds,
+  fetchSkills,
+  fetchUserSkillIds,
   saveUserSkillIds,
 } from '../../utils/skillsUtils';
 import './UsersManagement.css';
@@ -71,13 +71,12 @@ const UsersManagement: React.FC = () => {
     user.rut.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleShow = (user?: Usuario) => {
-    const skills = loadSkillsFromStorage();
-    setAvailableHabilidades(skills);
+  const handleShow = async (user?: Usuario) => {
+    setAvailableHabilidades(await fetchSkills());
     if (user) {
       setIsEditing(true);
       setCurrentUser({ ...user, clave: '' });
-      setSelectedHabilidades(user.id ? loadUserSkillIds(user.id) : []);
+      setSelectedHabilidades(user.id ? await fetchUserSkillIds(user.id) : []);
     } else {
       setIsEditing(false);
       setCurrentUser({ rut: '', nombre: '', clave: '', rol: 'COLABORADOR', correo: '' });
@@ -128,7 +127,7 @@ const UsersManagement: React.FC = () => {
 
       const saved = await response.json().catch(() => null);
       const userId = saved?.id ?? currentUser.id;
-      if (userId) saveUserSkillIds(userId, selectedHabilidades);
+      if (userId) await saveUserSkillIds(userId, selectedHabilidades);
       setMessage({ type: 'success', text: `Usuario ${isEditing ? 'actualizado' : 'creado'} con éxito` });
       fetchUsers();
       setTimeout(handleClose, 1500);

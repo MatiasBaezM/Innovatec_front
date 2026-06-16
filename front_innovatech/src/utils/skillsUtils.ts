@@ -1,58 +1,91 @@
+import { API_ENDPOINTS } from '../config/api';
+
 export interface Habilidad {
   id: number;
   nombre: string;
   color: string;
 }
 
-export const SKILLS_KEY = 'innovatech_habilidades';
-export const USER_SKILLS_KEY = 'innovatech_user_skills';
-
-export const DEFAULT_SKILLS: Habilidad[] = [
-  { id: 1, nombre: 'Desarrollador Backend',  color: '#6366f1' },
-  { id: 2, nombre: 'Desarrollador Frontend', color: '#0ea5e9' },
-  { id: 3, nombre: 'DBA',                    color: '#10b981' },
-  { id: 4, nombre: 'Analista QA',            color: '#f59e0b' },
-  { id: 5, nombre: 'Diseñador UX/UI',        color: '#ec4899' },
-  { id: 6, nombre: 'DevOps',                 color: '#ef4444' },
-  { id: 7, nombre: 'Scrum Master',           color: '#8b5cf6' },
-  { id: 8, nombre: 'Analista de Negocio',    color: '#14b8a6' },
-];
-
+// Paleta de colores sugeridos al crear/editar una habilidad
 export const COLORES_SKILLS = [
   '#6366f1','#0ea5e9','#10b981','#f59e0b',
   '#ec4899','#ef4444','#8b5cf6','#14b8a6',
   '#64748b','#f97316','#a855f7','#22c55e',
 ];
 
-export function loadSkillsFromStorage(): Habilidad[] {
-  try {
-    const s = localStorage.getItem(SKILLS_KEY);
-    if (s) return JSON.parse(s);
-    localStorage.setItem(SKILLS_KEY, JSON.stringify(DEFAULT_SKILLS));
-    return DEFAULT_SKILLS;
-  } catch { return DEFAULT_SKILLS; }
+function authHeaders(): Record<string, string> {
+  const token = localStorage.getItem('token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-export function saveSkillsToStorage(skills: Habilidad[]) {
-  localStorage.setItem(SKILLS_KEY, JSON.stringify(skills));
-}
+// ── Catálogo de habilidades (GET/POST/PUT/DELETE /api/habilidades) ──
 
-// Returns the skill IDs assigned to a given user
-export function loadUserSkillIds(userId: number): number[] {
+export async function fetchSkills(): Promise<Habilidad[]> {
   try {
-    const raw = localStorage.getItem(USER_SKILLS_KEY);
-    if (!raw) return [];
-    const map: Record<string, number[]> = JSON.parse(raw);
-    return map[String(userId)] ?? [];
+    const res = await fetch(API_ENDPOINTS.HABILIDADES.BASE, { headers: authHeaders() });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
   } catch { return []; }
 }
 
-// Saves the skill IDs for a given user
-export function saveUserSkillIds(userId: number, skillIds: number[]) {
+export async function createSkill(skill: Omit<Habilidad, 'id'>): Promise<Habilidad | null> {
   try {
-    const raw = localStorage.getItem(USER_SKILLS_KEY);
-    const map: Record<string, number[]> = raw ? JSON.parse(raw) : {};
-    map[String(userId)] = skillIds;
-    localStorage.setItem(USER_SKILLS_KEY, JSON.stringify(map));
-  } catch { /* ignore */ }
+    const res = await fetch(API_ENDPOINTS.HABILIDADES.BASE, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify(skill),
+    });
+    return res.ok ? await res.json() : null;
+  } catch { return null; }
+}
+
+export async function updateSkill(skill: Habilidad): Promise<Habilidad | null> {
+  try {
+    const res = await fetch(`${API_ENDPOINTS.HABILIDADES.BASE}/${skill.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify(skill),
+    });
+    return res.ok ? await res.json() : null;
+  } catch { return null; }
+}
+
+export async function deleteSkill(id: number): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_ENDPOINTS.HABILIDADES.BASE}/${id}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    });
+    return res.ok;
+  } catch { return false; }
+}
+
+// ── Habilidades por usuario (GET/PUT /auth/users/{id}/habilidades) ──
+
+// Devuelve las habilidades completas asignadas a un usuario
+export async function fetchUserSkills(userId: number): Promise<Habilidad[]> {
+  try {
+    const res = await fetch(API_ENDPOINTS.AUTH.USER_SKILLS(userId), { headers: authHeaders() });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch { return []; }
+}
+
+// Devuelve solo los IDs de habilidad asignados a un usuario
+export async function fetchUserSkillIds(userId: number): Promise<number[]> {
+  return (await fetchUserSkills(userId)).map(h => h.id);
+}
+
+// Reemplaza la lista completa de habilidades de un usuario
+export async function saveUserSkillIds(userId: number, skillIds: number[]): Promise<boolean> {
+  try {
+    const res = await fetch(API_ENDPOINTS.AUTH.USER_SKILLS(userId), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ habilidadIds: skillIds }),
+    });
+    return res.ok;
+  } catch { return false; }
 }

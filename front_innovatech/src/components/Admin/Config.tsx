@@ -5,8 +5,10 @@ import { API_ENDPOINTS } from '../../config/api';
 import {
   type Habilidad,
   COLORES_SKILLS,
-  loadSkillsFromStorage,
-  saveSkillsToStorage,
+  fetchSkills,
+  createSkill,
+  updateSkill,
+  deleteSkill,
 } from '../../utils/skillsUtils';
 import './Config.css';
 
@@ -65,7 +67,7 @@ const Config: React.FC = () => {
       .then(data => setActividades(Array.isArray(data) ? data : []))
       .finally(() => setActLoading(false));
 
-    setHabilidades(loadSkillsFromStorage());
+    fetchSkills().then(setHabilidades);
   }, []);
 
   // ── Perfil handlers ──
@@ -105,7 +107,7 @@ const Config: React.FC = () => {
   const exportarProyectos = async () => {
     const token = localStorage.getItem('token');
     const data = await fetch(API_ENDPOINTS.PROJECTS.BASE, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).catch(() => []);
-    downloadCSV('proyectos.csv', ['ID', 'Nombre', 'Descripción', 'Estado', 'Fecha Inicio', 'Fecha Fin'], (data as any[]).map(p => [p.id, p.nombre, p.descripcion, p.estado, p.fechaInicio ?? '', p.fechaFin ?? '']));
+    downloadCSV('proyectos.csv', ['ID', 'Nombre', 'Descripción', 'Estado', 'Fecha Inicio', 'Fecha Término'], (data as any[]).map(p => [p.id, p.nombre, p.descripcion, p.estado, p.fechaInicio ?? '', p.fechaTermino ?? p.fechaFin ?? '']));
   };
 
   // ── Habilidades handlers ──
@@ -121,25 +123,26 @@ const Config: React.FC = () => {
     setShowSkillModal(true);
   };
 
-  const handleSaveSkill = (e: React.FormEvent) => {
+  const handleSaveSkill = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!skillForm.nombre.trim()) return;
-    let updated: Habilidad[];
-    if (editingSkill) {
-      updated = habilidades.map(h => h.id === editingSkill.id ? { ...editingSkill, ...skillForm, nombre: skillForm.nombre.trim() } : h);
-    } else {
-      updated = [...habilidades, { id: Date.now(), nombre: skillForm.nombre.trim(), color: skillForm.color }];
+    const payload = { nombre: skillForm.nombre.trim(), color: skillForm.color };
+    const saved = editingSkill
+      ? await updateSkill({ id: editingSkill.id, ...payload })
+      : await createSkill(payload);
+    if (!saved) {
+      setSkillMsg({ type: 'danger', text: 'No se pudo guardar la habilidad. Intenta nuevamente.' });
+      return;
     }
-    setHabilidades(updated);
-    saveSkillsToStorage(updated);
+    setHabilidades(await fetchSkills());
     setSkillMsg({ type: 'success', text: `Habilidad ${editingSkill ? 'actualizada' : 'creada'} correctamente.` });
     setTimeout(() => setShowSkillModal(false), 900);
   };
 
-  const handleDeleteSkill = (id: number) => {
-    const updated = habilidades.filter(h => h.id !== id);
-    setHabilidades(updated);
-    saveSkillsToStorage(updated);
+  const handleDeleteSkill = async (id: number) => {
+    if (await deleteSkill(id)) {
+      setHabilidades(await fetchSkills());
+    }
     setShowDeleteSkill(null);
   };
 
@@ -218,7 +221,7 @@ const Config: React.FC = () => {
                 <div className="config-export-icon" style={{ background: '#10b98118', color: '#10b981' }}><FileText size={18} /></div>
                 <div className="config-export-info">
                   <div className="config-export-name">Proyectos</div>
-                  <div className="config-export-desc">ID, Nombre, Descripción, Estado, Fechas</div>
+                  <div className="config-export-desc">ID, Nombre, Descripción, Estado, Fecha Inicio, Fecha Término</div>
                 </div>
                 <Button variant="outline-success" className="config-dl-btn" onClick={exportarProyectos}><Download size={13} className="me-1" />Excel</Button>
               </div>

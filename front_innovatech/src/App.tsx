@@ -13,6 +13,7 @@ import TaskBoard from './components/User/TaskBoard'
 import GestorLayout from './components/Gestor/GestorLayout'
 import GestorProjects from './components/Gestor/GestorProjects'
 import GestorTaskBoard from './components/Gestor/GestorTaskBoard'
+import GestorProfile from './components/Gestor/GestorProfile'
 import { getRoleFromToken } from './context/AuthContext'
 import './App.css'
 
@@ -119,6 +120,16 @@ function App() {
           <GestorRoute>
             <GestorLayout>
               <GestorTaskBoard />
+            </GestorLayout>
+          </GestorRoute>
+        }
+      />
+      <Route
+        path="/gestor/perfil"
+        element={
+          <GestorRoute>
+            <GestorLayout>
+              <GestorProfile />
             </GestorLayout>
           </GestorRoute>
         }

@@ -16,6 +16,7 @@ interface Proyecto {
   descripcion: string;
   estado: string;
   fechaInicio: string;
+  fechaTermino: string;
   gestorId?: number | null;
   gestorNombre?: string | null;
   colaboradores?: Colaborador[];
@@ -28,6 +29,7 @@ interface Tarea {
   descripcion: string;
   fechaCreacion: string;
   fechaLimite: string;
+  horasEstimadas: number;
   asignadoId: number;
   asignadoNombre: string;
   prioridad: 'ALTA' | 'MEDIA' | 'BAJA';
@@ -67,6 +69,7 @@ const emptyTask = (proyectoId: number): Omit<Tarea, 'id'> => ({
   descripcion: '',
   fechaCreacion: new Date().toISOString().split('T')[0],
   fechaLimite: '',
+  horasEstimadas: 0,
   asignadoId: 0,
   asignadoNombre: '',
   prioridad: 'MEDIA',
@@ -92,6 +95,7 @@ const ProjectsManagement: React.FC = () => {
   const [currentProject, setCurrentProject] = useState<Proyecto>({
     nombre: '', descripcion: '', estado: 'INICIO',
     fechaInicio: new Date().toISOString().split('T')[0],
+    fechaTermino: '',
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -112,9 +116,9 @@ const ProjectsManagement: React.FC = () => {
   }>({ open: false, tarea: null, mensaje: '' });
 
   const mockProjects: Proyecto[] = [
-    { id: 1, nombre: 'Sistema Innovatech', descripcion: 'Desarrollo de plataforma central', estado: 'EN_PROGRESO', fechaInicio: '2026-05-01' },
-    { id: 2, nombre: 'App Móvil Clientes', descripcion: 'Aplicación para seguimiento de proyectos', estado: 'INICIO', fechaInicio: '2026-06-15' },
-    { id: 3, nombre: 'Migración Cloud', descripcion: 'Traslado de infraestructura a AWS', estado: 'FINALIZADO', fechaInicio: '2026-01-10' },
+    { id: 1, nombre: 'Sistema Innovatech', descripcion: 'Desarrollo de plataforma central', estado: 'EN_PROGRESO', fechaInicio: '2026-05-01', fechaTermino: '2026-09-30' },
+    { id: 2, nombre: 'App Móvil Clientes', descripcion: 'Aplicación para seguimiento de proyectos', estado: 'INICIO', fechaInicio: '2026-06-15', fechaTermino: '2026-12-15' },
+    { id: 3, nombre: 'Migración Cloud', descripcion: 'Traslado de infraestructura a AWS', estado: 'FINALIZADO', fechaInicio: '2026-01-10', fechaTermino: '2026-04-30' },
   ];
 
   useEffect(() => { fetchProjects(); }, []);
@@ -135,7 +139,7 @@ const ProjectsManagement: React.FC = () => {
       setCurrentProject(project);
     } else {
       setIsEditing(false);
-      setCurrentProject({ nombre: '', descripcion: '', estado: 'INICIO', fechaInicio: new Date().toISOString().split('T')[0] });
+      setCurrentProject({ nombre: '', descripcion: '', estado: 'INICIO', fechaInicio: new Date().toISOString().split('T')[0], fechaTermino: '' });
     }
     setShowModal(true);
   };
@@ -148,6 +152,10 @@ const ProjectsManagement: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (currentProject.fechaTermino && currentProject.fechaTermino < currentProject.fechaInicio) {
+      setMessage({ type: 'danger', text: 'La fecha de término no puede ser anterior a la fecha de inicio.' });
+      return;
+    }
     setLoading(true);
     const url = isEditing ? `${API_ENDPOINTS.PROJECTS.BASE}/${currentProject.id}` : API_ENDPOINTS.PROJECTS.BASE;
     try {
@@ -299,6 +307,8 @@ const ProjectsManagement: React.FC = () => {
     if (name === 'asignadoId') {
       const user = taskUsers.find(u => u.id.toString() === value);
       setNewTask(prev => ({ ...prev, asignadoId: Number(value), asignadoNombre: user?.nombre ?? '' }));
+    } else if (name === 'horasEstimadas') {
+      setNewTask(prev => ({ ...prev, horasEstimadas: Number(value) }));
     } else {
       setNewTask(prev => ({ ...prev, [name]: value }));
     }
@@ -407,6 +417,7 @@ const ProjectsManagement: React.FC = () => {
               <th>Nombre del Proyecto</th>
               <th>Estado</th>
               <th>Fecha Inicio</th>
+              <th>Fecha Término</th>
               <th className="text-end">Acciones</th>
             </tr>
           </thead>
@@ -424,6 +435,7 @@ const ProjectsManagement: React.FC = () => {
                   </Badge>
                 </td>
                 <td className="text-muted">{project.fechaInicio}</td>
+                <td className="text-muted">{project.fechaTermino || '—'}</td>
                 <td className="text-end">
                   <Button variant="link" className="action-btn tasks-btn" onClick={() => handleShowTasks(project)} title="Gestionar Tareas">
                     <ClipboardList size={18} />
@@ -463,6 +475,10 @@ const ProjectsManagement: React.FC = () => {
             <Form.Group className="mb-3">
               <Form.Label>Fecha de Inicio</Form.Label>
               <Form.Control type="date" name="fechaInicio" value={currentProject.fechaInicio} onChange={handleChange} required className="modal-input" />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Fecha de Término</Form.Label>
+              <Form.Control type="date" name="fechaTermino" value={currentProject.fechaTermino} onChange={handleChange} required min={currentProject.fechaInicio} className="modal-input" />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Estado</Form.Label>
@@ -616,6 +632,7 @@ const ProjectsManagement: React.FC = () => {
                           <div className="task-admin-meta">
                             <span>👤 {t.asignadoNombre || '—'}</span>
                             <span>📅 Límite: {t.fechaLimite || '—'}</span>
+                            <span>⏱ {t.horasEstimadas ? `${t.horasEstimadas} h` : '—'}</span>
                           </div>
                           {t.estado === 'COMPLETADO' && (
                             <div className="task-validation-btns">
@@ -679,6 +696,16 @@ const ProjectsManagement: React.FC = () => {
                       type="date" name="fechaLimite" value={newTask.fechaLimite}
                       onChange={handleTaskChange} required className="modal-input"
                       min={newTask.fechaCreacion}
+                    />
+                  </Form.Group>
+                </div>
+                <div className="col-sm-6">
+                  <Form.Group>
+                    <Form.Label>Horas estimadas <span className="text-danger">*</span></Form.Label>
+                    <Form.Control
+                      type="number" name="horasEstimadas" value={newTask.horasEstimadas || ''}
+                      onChange={handleTaskChange} required min={1} className="modal-input"
+                      placeholder="Ej: 8"
                     />
                   </Form.Group>
                 </div>

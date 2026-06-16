@@ -15,6 +15,7 @@ interface Tarea {
   asignadoId?: number;
   asignadoNombre?: string;
   fechaLimite?: string;
+  horasEstimadas?: number;
   mensajeCorreccion?: string;
 }
 
@@ -107,6 +108,9 @@ const TareaCard: React.FC<TareaCardProps> = ({
             {new Date(tarea.fechaLimite).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}
           </span>
         )}
+        {tarea.horasEstimadas ? (
+          <span className="tb-fecha">{tarea.horasEstimadas} h</span>
+        ) : null}
       </div>
     </div>
   );
