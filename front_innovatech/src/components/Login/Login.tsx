@@ -3,7 +3,7 @@ import { Form, Button, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../../config/api';
 import { formatRut, validateRut } from '../../utils/rutUtils';
-import { getRoleFromToken, useAuth } from '../../context/AuthContext';
+import { getRoleFromToken, getValidToken, useAuth } from '../../context/AuthContext';
 import './Login.css';
 
 function getRedirectPath(rol: string | null): string {
@@ -21,7 +21,9 @@ const Login: React.FC = () => {
   const { refreshUser } = useAuth();
 
   React.useEffect(() => {
-    const token = localStorage.getItem('token');
+    // Solo auto-redirige si hay un token VALIDO (no expirado); si esta vencido
+    // getValidToken lo limpia y el usuario ve el formulario de login.
+    const token = getValidToken();
     if (token) {
       const rol = getRoleFromToken();
       navigate(getRedirectPath(rol), { replace: true });

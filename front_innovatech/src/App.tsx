@@ -14,18 +14,18 @@ import GestorLayout from './components/Gestor/GestorLayout'
 import GestorProjects from './components/Gestor/GestorProjects'
 import GestorTaskBoard from './components/Gestor/GestorTaskBoard'
 import GestorProfile from './components/Gestor/GestorProfile'
-import { getRoleFromToken } from './context/AuthContext'
+import { getRoleFromToken, getValidToken } from './context/AuthContext'
 import './App.css'
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const token = localStorage.getItem('token');
+  const token = getValidToken();
   const location = useLocation();
   if (!token) return <Navigate to="/login" state={{ from: location }} replace />;
   return <>{children}</>;
 };
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
-  const token = localStorage.getItem('token');
+  const token = getValidToken();
   const location = useLocation();
   if (!token) return <Navigate to="/login" state={{ from: location }} replace />;
   const rol = getRoleFromToken();
@@ -35,7 +35,7 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const GestorRoute = ({ children }: { children: React.ReactNode }) => {
-  const token = localStorage.getItem('token');
+  const token = getValidToken();
   const location = useLocation();
   if (!token) return <Navigate to="/login" state={{ from: location }} replace />;
   const rol = getRoleFromToken();

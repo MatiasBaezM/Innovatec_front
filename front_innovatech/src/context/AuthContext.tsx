@@ -28,6 +28,9 @@ function decodeToken(token: string): UserInfo | null {
       ).join('')
     );
     const payload = JSON.parse(jsonPayload);
+    // Rechaza tokens expirados: sin esto, un token viejo deja la sesion "abierta"
+    // indefinidamente en el navegador (acceso sin volver a autenticar).
+    if (payload.exp && Date.now() >= payload.exp * 1000) return null;
     const rol = (
       payload.rol || payload.roles?.[0] || payload.role || 'COLABORADOR'
     ).toString().toUpperCase();
@@ -92,4 +95,20 @@ export function getRoleFromToken(): string | null {
   if (!token) return null;
   const info = decodeToken(token);
   return info?.rol ?? null;
+}
+
+/**
+ * Devuelve el token solo si es valido (firma con formato JWT y NO expirado).
+ * Si esta vencido o malformado lo borra de localStorage y devuelve null, para
+ * que los guards de ruta manden al login en vez de mostrar pantallas protegidas
+ * con una sesion muerta.
+ */
+export function getValidToken(): string | null {
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+  if (!decodeToken(token)) {
+    localStorage.removeItem('token');
+    return null;
+  }
+  return token;
 }
