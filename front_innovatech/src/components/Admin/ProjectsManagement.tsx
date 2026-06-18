@@ -115,20 +115,14 @@ const ProjectsManagement: React.FC = () => {
     open: boolean; tarea: Tarea | null; mensaje: string;
   }>({ open: false, tarea: null, mensaje: '' });
 
-  const mockProjects: Proyecto[] = [
-    { id: 1, nombre: 'Sistema Innovatech', descripcion: 'Desarrollo de plataforma central', estado: 'EN_PROGRESO', fechaInicio: '2026-05-01', fechaTermino: '2026-09-30' },
-    { id: 2, nombre: 'App Móvil Clientes', descripcion: 'Aplicación para seguimiento de proyectos', estado: 'INICIO', fechaInicio: '2026-06-15', fechaTermino: '2026-12-15' },
-    { id: 3, nombre: 'Migración Cloud', descripcion: 'Traslado de infraestructura a AWS', estado: 'FINALIZADO', fechaInicio: '2026-01-10', fechaTermino: '2026-04-30' },
-  ];
-
   useEffect(() => { fetchProjects(); }, []);
 
   const fetchProjects = async () => {
     try {
       const response = await fetch(API_ENDPOINTS.PROJECTS.BASE);
-      setProjects(response.ok ? await response.json() : mockProjects);
+      setProjects(response.ok ? await response.json() : []);
     } catch {
-      setProjects(mockProjects);
+      setProjects([]);
     }
   };
 
