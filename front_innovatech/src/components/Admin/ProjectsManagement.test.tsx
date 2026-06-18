@@ -66,10 +66,13 @@ describe('ProjectsManagement', () => {
     expect(screen.getByText('EN_PROGRESO')).toBeInTheDocument();
   });
 
-  it('usa proyectos de respaldo cuando la API responde con error', async () => {
+  it('muestra tabla vacía cuando la API responde con error', async () => {
     stubFetch({ projectsOk: false });
     render(<ProjectsManagement />);
-    expect(await screen.findByText('Sistema Innovatech')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText('Sistema Innovatech')).not.toBeInTheDocument();
+      expect(screen.queryByText('App Móvil Clientes')).not.toBeInTheDocument();
+    });
   });
 
   it('abre el modal de nuevo proyecto', async () => {
