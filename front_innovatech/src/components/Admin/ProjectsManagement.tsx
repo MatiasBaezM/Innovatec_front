@@ -119,7 +119,10 @@ const ProjectsManagement: React.FC = () => {
 
   const fetchProjects = async () => {
     try {
-      const response = await fetch(API_ENDPOINTS.PROJECTS.BASE);
+      const token = localStorage.getItem('token');
+      const response = await fetch(API_ENDPOINTS.PROJECTS.BASE, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setProjects(response.ok ? await response.json() : []);
     } catch {
       setProjects([]);
@@ -153,9 +156,10 @@ const ProjectsManagement: React.FC = () => {
     setLoading(true);
     const url = isEditing ? `${API_ENDPOINTS.PROJECTS.BASE}/${currentProject.id}` : API_ENDPOINTS.PROJECTS.BASE;
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(url, {
         method: isEditing ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(currentProject),
       });
       if (!response.ok) throw new Error('Error en la operación');
@@ -181,7 +185,8 @@ const ProjectsManagement: React.FC = () => {
   const confirmDelete = (id: number) => { setProjectToDelete(id); setShowDeleteConfirm(true); };
   const handleDelete = async () => {
     if (projectToDelete === null) return;
-    try { await fetch(`${API_ENDPOINTS.PROJECTS.BASE}/${projectToDelete}`, { method: 'DELETE' }); fetchProjects(); }
+    const token = localStorage.getItem('token');
+    try { await fetch(`${API_ENDPOINTS.PROJECTS.BASE}/${projectToDelete}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } }); fetchProjects(); }
     catch { setProjects(projects.filter(p => p.id !== projectToDelete)); }
     finally { setShowDeleteConfirm(false); setProjectToDelete(null); }
   };
