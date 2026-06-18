@@ -112,3 +112,18 @@ export function getValidToken(): string | null {
   }
   return token;
 }
+
+/**
+ * Devuelve los headers de Authorization usando un token VÁLIDO. Si el token
+ * está vencido o ausente, limpia la sesión y redirige al login, devolviendo
+ * null para que el caller corte la petición. Sin esto se enviaba un token
+ * muerto y el backend respondía 401 dejando la pantalla rota.
+ */
+export function authHeaders(): { Authorization: string } | null {
+  const token = getValidToken();
+  if (!token) {
+    window.location.href = '/login';
+    return null;
+  }
+  return { Authorization: `Bearer ${token}` };
+}

@@ -3,6 +3,7 @@ import { Row, Col, Card, Badge, Form, InputGroup } from 'react-bootstrap';
 import { FolderKanban, Search, Users, ArrowRight, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../../config/api';
+import { authHeaders } from '../../context/AuthContext';
 // Reutiliza los estilos del colaborador — misma estructura visual
 import '../User/UserProjects.css';
 
@@ -95,8 +96,8 @@ const GestorProjects: React.FC = () => {
   const [modalProyecto, setModalProyecto] = useState<Proyecto | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
+    const headers = authHeaders();
+    if (!headers) { setLoading(false); return; }
 
     fetch(API_ENDPOINTS.PROJECTS.BASE, { headers })
       .then(r => r.ok ? r.json() : Promise.reject())

@@ -18,9 +18,16 @@ function okJson(data: unknown) {
   return Promise.resolve({ ok: true, json: () => Promise.resolve(data) } as Response);
 }
 
+// JWT de prueba válido (no expirado) para que authHeaders() no redirija al login
+function validToken() {
+  const payload = btoa(JSON.stringify({ sub: 'user', rol: 'COLABORADOR', exp: Math.floor(Date.now() / 1000) + 3600 }));
+  return `header.${payload}.signature`;
+}
+
 describe('UserProjects', () => {
   beforeEach(() => {
     localStorage.clear();
+    localStorage.setItem('token', validToken());
     navigateMock.mockClear();
   });
   afterEach(() => vi.restoreAllMocks());
