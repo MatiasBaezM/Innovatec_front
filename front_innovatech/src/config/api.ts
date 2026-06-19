@@ -19,6 +19,11 @@ export const API_ENDPOINTS = {
   PROJECTS: {
     BASE:       `${API_BASE_URL}/api/proyectos`,
     ACTIVITIES: `${API_BASE_URL}/api/proyectos/actividades`,
+    // Feed del gestor: actividades de sus proyectos + tareas por aprobar
+    GESTOR_ACTIVITIES: `${API_BASE_URL}/api/proyectos/actividades/gestor`,
+    // Tarea individual (para aprobar desde el panel): GET full + PUT REVISADO
+    TASK: (proyectoId: number | string, tareaId: number | string) =>
+      `${API_BASE_URL}/api/proyectos/${proyectoId}/tareas/${tareaId}`,
   },
   RESOURCES: {
     WORKERS:     `${API_BASE_URL}/api/trabajadores`,
