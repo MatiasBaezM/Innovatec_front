@@ -1,0 +1,174 @@
+.gantt-wrapper {
+  margin-top: 2rem;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 1.25rem 1.5rem;
+  overflow-x: auto;
+}
+
+.gantt-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.gantt-table-wrapper {
+  min-width: 700px;
+  position: relative;
+}
+
+.gantt-header-row {
+  display: flex;
+  border-bottom: 2px solid #e2e8f0;
+  margin-bottom: 0;
+}
+
+.gantt-label-col {
+  width: 200px;
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  padding: 4px 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.gantt-day-headers {
+  flex: 1;
+  display: flex;
+}
+
+.gantt-day-header {
+  flex: 1;
+  font-size: 10px;
+  color: #94a3b8;
+  text-align: center;
+  padding: 4px 0;
+  border-left: 1px solid #f1f5f9;
+}
+
+.gantt-day-header.weekend {
+  background: #f8fafc;
+}
+
+.gantt-row {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  border-bottom: 1px solid #f1f5f9;
+  position: relative;
+}
+
+.gantt-row:last-child {
+  border-bottom: none;
+}
+
+.gantt-row-label {
+  width: 200px;
+  flex-shrink: 0;
+  padding: 4px 8px;
+}
+
+.gantt-row-task-name {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #334155;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gantt-row-assignee {
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+.gantt-row-cells {
+  flex: 1;
+  display: flex;
+  position: relative;
+  height: 100%;
+  align-items: center;
+}
+
+.gantt-cell {
+  flex: 1;
+  height: 100%;
+  border-left: 1px solid #f1f5f9;
+}
+
+.gantt-cell.weekend {
+  background: #f8fafc;
+}
+
+.gantt-bar {
+  position: absolute;
+  height: 24px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: default;
+  transition: opacity 0.15s;
+  z-index: 2;
+}
+
+.gantt-bar:hover {
+  opacity: 0.85;
+}
+
+.gantt-bar.POR_HACER   { background: #64748b; color: #f1f5f9; }
+.gantt-bar.EN_PROGRESO { background: #6366f1; color: #f0f0ff; }
+.gantt-bar.COMPLETADO  { background: #10b981; color: #d1fae5; }
+.gantt-bar.REVISADO    { background: #8b5cf6; color: #ede9fe; }
+
+.gantt-today-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #ef4444;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.gantt-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.gantt-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.gantt-legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.gantt-empty {
+  padding: 1.5rem;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.875rem;
+}

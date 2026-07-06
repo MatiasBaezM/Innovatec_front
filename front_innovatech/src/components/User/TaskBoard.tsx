@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Badge } from 'react-bootstrap';
 import { ArrowLeft, FolderKanban, AlertTriangle, CheckCircle } from 'lucide-react';
 import API_BASE_URL, { API_ENDPOINTS } from '../../config/api';
+import GanttChart from '../Gantt/GanttChart';
 import './TaskBoard.css';
 
 interface Tarea {
@@ -308,6 +309,9 @@ const TaskBoard: React.FC = () => {
           );
         })}
       </div>
+
+      {/* ── Carta Gantt ── */}
+      <GanttChart proyectoId={Number(id)} nombreProyecto={proyecto?.nombre} />
     </div>
   );
 };

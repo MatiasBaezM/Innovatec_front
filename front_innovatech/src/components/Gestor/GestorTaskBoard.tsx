@@ -4,6 +4,7 @@ import { Badge, Modal, Form, Button, Alert, Row, Col } from 'react-bootstrap';
 import { ArrowLeft, FolderKanban, CheckCircle, XCircle, AlertTriangle, Plus, Flag } from 'lucide-react';
 import API_BASE_URL, { API_ENDPOINTS } from '../../config/api';
 import { pushNotificacion } from '../../utils/notificationsUtils';
+import GanttChart from '../Gantt/GanttChart';
 import '../User/TaskBoard.css';
 
 interface Tarea {
@@ -485,6 +486,9 @@ const GestorTaskBoard: React.FC = () => {
           );
         })}
       </div>
+
+      {/* ── Carta Gantt ── */}
+      <GanttChart proyectoId={proyectoId} nombreProyecto={proyecto?.nombre} />
 
       {/* ── Modal: Nueva Tarea ── */}
       <Modal show={showTaskModal} onHide={() => setShowTaskModal(false)} centered size="lg">

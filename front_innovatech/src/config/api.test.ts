@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+ import { describe, it, expect } from 'vitest';
 import API_BASE_URL, { API_ENDPOINTS } from './api';
 
 describe('config/api', () => {

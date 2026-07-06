@@ -37,6 +37,9 @@ export const API_ENDPOINTS = {
   HABILIDADES: {
     BASE: `${API_BASE_URL}/api/habilidades`,
   },
+  GANTT: {
+    PROYECTO: (id: number | string) => `${API_BASE_URL}/api/gantt/proyectos/${id}`,
+  },
 };
 
 export default API_BASE_URL;
