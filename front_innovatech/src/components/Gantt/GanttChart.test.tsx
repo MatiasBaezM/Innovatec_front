@@ -23,7 +23,7 @@ describe('GanttChart', () => {
     expect(screen.getByText(/cargando diagrama/i)).toBeInTheDocument();
   });
 
-  it('muestra mensaje cuando no hay tareas con fechas', async () => {
+  it('pide definir fechas cuando no hay fechas de proyecto ni tareas', async () => {
     (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -39,7 +39,31 @@ describe('GanttChart', () => {
     render(<GanttChart proyectoId={1} />);
 
     await waitFor(() => {
-      expect(screen.getByText(/no hay tareas con fechas/i)).toBeInTheDocument();
+      expect(screen.getByText(/define una fecha de inicio y de término/i)).toBeInTheDocument();
+    });
+  });
+
+  it('dibuja el calendario (meses y rango) aunque no haya tareas todavía', async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        proyectoId: 1,
+        nombreProyecto: 'Proyecto Test',
+        estado: 'INICIO',
+        fechaInicioProyecto: '2026-07-05',
+        fechaFinProyecto: '2026-08-20',
+        tareas: [],
+      }),
+    });
+
+    render(<GanttChart proyectoId={1} />);
+
+    await waitFor(() => {
+      // Los meses del rango aparecen en la cabecera del calendario
+      expect(screen.getByText('Julio 2026')).toBeInTheDocument();
+      expect(screen.getByText('Agosto 2026')).toBeInTheDocument();
+      // Y el aviso de que aún no hay tareas
+      expect(screen.getByText(/aún no hay tareas con fechas/i)).toBeInTheDocument();
     });
   });
 

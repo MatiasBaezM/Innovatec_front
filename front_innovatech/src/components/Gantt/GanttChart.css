@@ -43,6 +43,65 @@
   position: relative;
 }
 
+/* Rango de entrega del proyecto (inicio → término) */
+.gantt-range {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.9rem;
+  font-size: 0.85rem;
+  color: #334155;
+}
+
+.gantt-range-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-weight: 600;
+}
+
+.gantt-range-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+}
+
+.gantt-range-arrow {
+  color: #cbd5e1;
+  font-weight: 700;
+}
+
+/* Fila de meses (justo encima de los días) */
+.gantt-month-row {
+  display: flex;
+}
+
+.gantt-month-headers {
+  flex: 1;
+  display: flex;
+}
+
+.gantt-month-header {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #475569;
+  text-align: center;
+  padding: 3px 0;
+  text-transform: capitalize;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Separación entre meses: borde vertical que atraviesa cabecera y celdas */
+.gantt-month-header.month-start,
+.gantt-day-header.month-start,
+.gantt-cell.month-start {
+  border-left: 2px solid #cbd5e1;
+}
+
 .gantt-header-row {
   display: flex;
   border-bottom: 2px solid #e2e8f0;
@@ -185,6 +244,14 @@
   height: 12px;
   border-radius: 2px;
   flex-shrink: 0;
+}
+
+.gantt-no-tasks {
+  padding: 1rem;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .gantt-empty {

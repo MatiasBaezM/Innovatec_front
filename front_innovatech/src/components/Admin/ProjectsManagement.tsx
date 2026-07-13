@@ -124,7 +124,9 @@ const ProjectsManagement: React.FC = () => {
       const response = await fetch(API_ENDPOINTS.PROJECTS.BASE, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setProjects(response.ok ? await response.json() : []);
+      const data = response.ok ? await response.json() : [];
+      // El backend expone la fecha de término como `fechaFin`; la UI usa `fechaTermino`.
+      setProjects(data.map((p: any) => ({ ...p, fechaTermino: p.fechaFin ?? p.fechaTermino ?? '' })));
     } catch {
       setProjects([]);
     }
@@ -161,7 +163,8 @@ const ProjectsManagement: React.FC = () => {
       const response = await fetch(url, {
         method: isEditing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(currentProject),
+        // El backend espera `fechaFin` para la fecha de término del proyecto.
+        body: JSON.stringify({ ...currentProject, fechaFin: currentProject.fechaTermino || null }),
       });
       if (!response.ok) throw new Error('Error en la operación');
       if (!isEditing) {

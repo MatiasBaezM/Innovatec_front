@@ -71,6 +71,38 @@ function generarDias(inicio: Date, fin: Date): Date[] {
   return dias;
 }
 
+const MESES_ES = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+];
+
+interface MesGrupo {
+  nombre: string; // "Julio 2026"
+  dias: number;   // cantidad de columnas de día que abarca el mes
+}
+
+// Agrupa los días consecutivos por mes para dibujar la cabecera superior:
+// cada mes queda justo encima de sus días, con un ancho proporcional.
+function generarMeses(dias: Date[]): MesGrupo[] {
+  const meses: MesGrupo[] = [];
+  for (const d of dias) {
+    const nombre = `${MESES_ES[d.getMonth()]} ${d.getFullYear()}`;
+    const ultimo = meses[meses.length - 1];
+    if (ultimo && ultimo.nombre === nombre) {
+      ultimo.dias += 1;
+    } else {
+      meses.push({ nombre, dias: 1 });
+    }
+  }
+  return meses;
+}
+
+// Un día "abre" un mes (marca la separación) si es el día 1 y no es la
+// primera columna del eje.
+function esInicioDeMes(d: Date, indice: number): boolean {
+  return indice > 0 && d.getDate() === 1;
+}
+
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
@@ -85,9 +117,13 @@ const PRINT_CSS = `
   .gantt-table-wrapper { min-width: 700px; position: relative; }
   .gantt-header-row { display: flex; border-bottom: 2px solid #e2e8f0; }
   .gantt-label-col { width: 200px; flex-shrink: 0; font-size: 0.75rem; font-weight: 600; color: #64748b; padding: 4px 8px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .gantt-month-row { display: flex; }
+  .gantt-month-headers { flex: 1; display: flex; }
+  .gantt-month-header { font-size: 11px; font-weight: 700; color: #475569; text-align: center; padding: 3px 0; text-transform: capitalize; white-space: nowrap; overflow: hidden; }
   .gantt-day-headers { flex: 1; display: flex; }
   .gantt-day-header { flex: 1; font-size: 10px; color: #94a3b8; text-align: center; padding: 4px 0; border-left: 1px solid #f1f5f9; }
   .gantt-day-header.weekend { background: #f8fafc; }
+  .gantt-month-header.month-start, .gantt-day-header.month-start, .gantt-cell.month-start { border-left: 2px solid #cbd5e1; }
   .gantt-row { display: flex; align-items: center; height: 40px; border-bottom: 1px solid #f1f5f9; position: relative; page-break-inside: avoid; }
   .gantt-row:last-child { border-bottom: none; }
   .gantt-row-label { width: 200px; flex-shrink: 0; padding: 4px 8px; }
@@ -194,7 +230,25 @@ const GanttChart: React.FC<Props> = ({ proyectoId, nombreProyecto }) => {
     );
   }
 
-  if (data.tareas.length === 0) {
+  // ── Calcular rango de fechas del eje X ─────────────────────────
+  // Prioriza las fechas de entrega del proyecto (definidas por el administrador);
+  // si no existen, cae al mínimo/máximo de las tareas. El calendario se dibuja
+  // aunque todavía no haya tareas, para que la carta Gantt aparezca al crear
+  // el proyecto con su rango inicio–término.
+  const inicioStr =
+    data.fechaInicioProyecto ??
+    (data.tareas.length > 0
+      ? data.tareas.reduce((min, t) => (t.fechaInicio < min ? t.fechaInicio : min), data.tareas[0].fechaInicio)
+      : null);
+
+  const finStr =
+    data.fechaFinProyecto ??
+    (data.tareas.length > 0
+      ? data.tareas.reduce((max, t) => (t.fechaFin > max ? t.fechaFin : max), data.tareas[0].fechaFin)
+      : null);
+
+  // Sin fechas de proyecto ni tareas no hay eje que dibujar.
+  if (!inicioStr || !finStr) {
     return (
       <div className="gantt-wrapper">
         <div className="gantt-title">
@@ -202,31 +256,18 @@ const GanttChart: React.FC<Props> = ({ proyectoId, nombreProyecto }) => {
           Carta Gantt — {data.nombreProyecto}
         </div>
         <div className="gantt-empty">
-          No hay tareas con fechas definidas. Asigna una fecha de inicio y término
-          al crear las tareas para verlas aquí.
+          Define una fecha de inicio y de término para el proyecto para ver la carta Gantt.
         </div>
       </div>
     );
   }
 
-  // ── Calcular rango de fechas del eje X ─────────────────────────
-  // Si el proyecto tiene fechas, usarlas; si no, calcular desde las tareas.
-  const fechaInicioProy = data.fechaInicioProyecto
-    ? parseFecha(data.fechaInicioProyecto)
-    : parseFecha(
-        data.tareas.reduce((min, t) => (t.fechaInicio < min ? t.fechaInicio : min),
-          data.tareas[0].fechaInicio)
-      );
-
-  const fechaFinProy = data.fechaFinProyecto
-    ? parseFecha(data.fechaFinProyecto)
-    : parseFecha(
-        data.tareas.reduce((max, t) => (t.fechaFin > max ? t.fechaFin : max),
-          data.tareas[0].fechaFin)
-      );
+  const fechaInicioProy = parseFecha(inicioStr);
+  const fechaFinProy = parseFecha(finStr);
 
   const totalDias = diasEntre(fechaInicioProy, fechaFinProy);
   const dias = generarDias(fechaInicioProy, fechaFinProy);
+  const meses = generarMeses(dias);
 
   const hoy = new Date();
   hoy.setHours(0, 0, 0, 0);
@@ -267,16 +308,46 @@ const GanttChart: React.FC<Props> = ({ proyectoId, nombreProyecto }) => {
         </button>
       </div>
 
+      {/* Rango de entrega del proyecto: fecha de inicio y de término */}
+      <div className="gantt-range">
+        <span className="gantt-range-item">
+          <span className="gantt-range-label">Inicio</span>
+          {fechaInicioProy.toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' })}
+        </span>
+        <span className="gantt-range-arrow">→</span>
+        <span className="gantt-range-item">
+          <span className="gantt-range-label">Término</span>
+          {fechaFinProy.toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' })}
+        </span>
+      </div>
+
       <div ref={printRef}>
         <div className="gantt-table-wrapper">
-          {/* Header: nombres de días */}
+          {/* Header fila 1: meses, justo encima de sus días */}
+          <div className="gantt-month-row">
+            <div className="gantt-label-col gantt-month-spacer" />
+            <div className="gantt-month-headers">
+              {meses.map((m, i) => (
+                <div
+                  key={i}
+                  className={`gantt-month-header${i > 0 ? ' month-start' : ''}`}
+                  style={{ flexGrow: m.dias, flexBasis: 0 }}
+                  title={m.nombre}
+                >
+                  {m.nombre}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Header fila 2: número de día */}
           <div className="gantt-header-row">
             <div className="gantt-label-col">Tarea</div>
             <div className="gantt-day-headers">
               {dias.map((d, i) => (
                 <div
                   key={i}
-                  className={`gantt-day-header${esFinDeSemana(d) ? ' weekend' : ''}`}
+                  className={`gantt-day-header${esFinDeSemana(d) ? ' weekend' : ''}${esInicioDeMes(d, i) ? ' month-start' : ''}`}
                   title={d.toLocaleDateString('es-CL')}
                 >
                   {d.getDate()}
@@ -284,6 +355,14 @@ const GanttChart: React.FC<Props> = ({ proyectoId, nombreProyecto }) => {
               ))}
             </div>
           </div>
+
+          {/* Aviso cuando el calendario existe pero aún no hay tareas */}
+          {data.tareas.length === 0 && (
+            <div className="gantt-no-tasks">
+              Aún no hay tareas con fechas. El calendario muestra el rango de entrega del
+              proyecto; las barras aparecerán al asignar fechas a las tareas.
+            </div>
+          )}
 
           {/* Filas de tareas */}
           {data.tareas.map(tarea => (
@@ -302,7 +381,7 @@ const GanttChart: React.FC<Props> = ({ proyectoId, nombreProyecto }) => {
                 {dias.map((d, i) => (
                   <div
                     key={i}
-                    className={`gantt-cell${esFinDeSemana(d) ? ' weekend' : ''}`}
+                    className={`gantt-cell${esFinDeSemana(d) ? ' weekend' : ''}${esInicioDeMes(d, i) ? ' month-start' : ''}`}
                   />
                 ))}
 
