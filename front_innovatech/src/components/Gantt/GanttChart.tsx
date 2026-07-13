@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Spinner } from 'react-bootstrap';
-import { BarChart2 } from 'lucide-react';
+import { BarChart2, Download } from 'lucide-react';
 import { API_ENDPOINTS } from '../../config/api';
 import './GanttChart.css';
 
@@ -71,11 +71,81 @@ function generarDias(inicio: Date, fin: Date): Date[] {
   return dias;
 }
 
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// CSS embebido para el documento de impresión/PDF (ventana aparte, sin acceso
+// al bundle de la app), reutilizando las mismas clases que GanttChart.css.
+const PRINT_CSS = `
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; margin: 24px; color: #1e293b; }
+  .print-doc-title { font-size: 1.15rem; font-weight: 700; margin: 0 0 4px; }
+  .print-doc-subtitle { font-size: 0.8rem; color: #64748b; margin: 0 0 20px; }
+  .gantt-table-wrapper { min-width: 700px; position: relative; }
+  .gantt-header-row { display: flex; border-bottom: 2px solid #e2e8f0; }
+  .gantt-label-col { width: 200px; flex-shrink: 0; font-size: 0.75rem; font-weight: 600; color: #64748b; padding: 4px 8px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .gantt-day-headers { flex: 1; display: flex; }
+  .gantt-day-header { flex: 1; font-size: 10px; color: #94a3b8; text-align: center; padding: 4px 0; border-left: 1px solid #f1f5f9; }
+  .gantt-day-header.weekend { background: #f8fafc; }
+  .gantt-row { display: flex; align-items: center; height: 40px; border-bottom: 1px solid #f1f5f9; position: relative; page-break-inside: avoid; }
+  .gantt-row:last-child { border-bottom: none; }
+  .gantt-row-label { width: 200px; flex-shrink: 0; padding: 4px 8px; }
+  .gantt-row-task-name { font-size: 0.78rem; font-weight: 500; color: #334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gantt-row-assignee { font-size: 0.68rem; color: #94a3b8; }
+  .gantt-row-cells { flex: 1; display: flex; position: relative; height: 100%; align-items: center; }
+  .gantt-cell { flex: 1; height: 100%; border-left: 1px solid #f1f5f9; }
+  .gantt-cell.weekend { background: #f8fafc; }
+  .gantt-bar { position: absolute; height: 22px; border-radius: 4px; display: flex; align-items: center; padding: 0 8px; font-size: 10px; font-weight: 500; white-space: nowrap; overflow: hidden; }
+  .gantt-bar.POR_HACER { background: #64748b; color: #f1f5f9; }
+  .gantt-bar.EN_PROGRESO { background: #6366f1; color: #f0f0ff; }
+  .gantt-bar.COMPLETADO { background: #10b981; color: #d1fae5; }
+  .gantt-bar.REVISADO { background: #8b5cf6; color: #ede9fe; }
+  .gantt-today-line { position: absolute; top: 0; bottom: 0; width: 2px; background: #ef4444; }
+  .gantt-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #f1f5f9; }
+  .gantt-legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #64748b; }
+  .gantt-legend-dot { width: 11px; height: 11px; border-radius: 2px; flex-shrink: 0; }
+  @page { size: landscape; margin: 12mm; }
+`;
+
 // ── Componente ───────────────────────────────────────────────────
 const GanttChart: React.FC<Props> = ({ proyectoId, nombreProyecto }) => {
   const [data, setData] = useState<GanttProyecto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const printRef = useRef<HTMLDivElement>(null);
+
+  function handleDownloadPdf() {
+    if (!printRef.current || !data) return;
+
+    const printWindow = window.open('', '_blank', 'width=1200,height=800');
+    if (!printWindow) return; // el navegador bloqueó el popup
+
+    const nombre = escapeHtml(data.nombreProyecto);
+    const fechaGeneracion = new Date().toLocaleDateString('es-CL', {
+      day: '2-digit', month: 'long', year: 'numeric',
+    });
+
+    printWindow.document.write(`<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>Carta Gantt - ${nombre}</title>
+<style>${PRINT_CSS}</style>
+</head>
+<body>
+  <h1 class="print-doc-title">Carta Gantt — ${nombre}</h1>
+  <p class="print-doc-subtitle">Generado el ${fechaGeneracion}</p>
+  ${printRef.current.innerHTML}
+</body>
+</html>`);
+    printWindow.document.close();
+
+    printWindow.onload = () => {
+      printWindow.focus();
+      printWindow.print();
+    };
+  }
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -187,82 +257,92 @@ const GanttChart: React.FC<Props> = ({ proyectoId, nombreProyecto }) => {
       <div className="gantt-title">
         <BarChart2 size={18} color="#8b5cf6" />
         Carta Gantt — {data.nombreProyecto}
+        <button
+          type="button"
+          className="gantt-download-btn"
+          onClick={handleDownloadPdf}
+          title="Descargar la carta Gantt como PDF"
+        >
+          <Download size={14} /> Descargar PDF
+        </button>
       </div>
 
-      <div className="gantt-table-wrapper">
-        {/* Header: nombres de días */}
-        <div className="gantt-header-row">
-          <div className="gantt-label-col">Tarea</div>
-          <div className="gantt-day-headers">
-            {dias.map((d, i) => (
-              <div
-                key={i}
-                className={`gantt-day-header${esFinDeSemana(d) ? ' weekend' : ''}`}
-                title={d.toLocaleDateString('es-CL')}
-              >
-                {d.getDate()}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Filas de tareas */}
-        {data.tareas.map(tarea => (
-          <div key={tarea.id} className="gantt-row">
-            {/* Columna de nombre */}
-            <div className="gantt-row-label">
-              <div className="gantt-row-task-name" title={tarea.titulo}>
-                {tarea.titulo}
-              </div>
-              <div className="gantt-row-assignee">{tarea.asignadoNombre}</div>
-            </div>
-
-            {/* Celdas del calendario + barra */}
-            <div className="gantt-row-cells">
-              {/* Celdas de fondo (para columnas de días) */}
+      <div ref={printRef}>
+        <div className="gantt-table-wrapper">
+          {/* Header: nombres de días */}
+          <div className="gantt-header-row">
+            <div className="gantt-label-col">Tarea</div>
+            <div className="gantt-day-headers">
               {dias.map((d, i) => (
                 <div
                   key={i}
-                  className={`gantt-cell${esFinDeSemana(d) ? ' weekend' : ''}`}
-                />
+                  className={`gantt-day-header${esFinDeSemana(d) ? ' weekend' : ''}`}
+                  title={d.toLocaleDateString('es-CL')}
+                >
+                  {d.getDate()}
+                </div>
               ))}
-
-              {/* Barra de la tarea */}
-              <div
-                className={`gantt-bar ${tarea.estado}`}
-                style={{
-                  left: `${calcBarLeft(tarea.fechaInicio)}%`,
-                  width: `${calcBarWidth(tarea.fechaInicio, tarea.fechaFin)}%`,
-                }}
-                title={`${tarea.titulo} — ${ESTADO_LABELS[tarea.estado]} — ${tarea.fechaInicio} / ${tarea.fechaFin}`}
-              >
-                {tarea.titulo}
-              </div>
-
-              {/* Línea de hoy */}
-              {todayOffset !== null && (
-                <div
-                  className="gantt-today-line"
-                  style={{ left: `${todayOffset}%` }}
-                  title="Hoy"
-                />
-              )}
             </div>
           </div>
-        ))}
-      </div>
 
-      {/* Leyenda */}
-      <div className="gantt-legend">
-        {Object.entries(LEGEND_COLORS).map(([estado, color]) => (
-          <div key={estado} className="gantt-legend-item">
-            <div className="gantt-legend-dot" style={{ background: color }} />
-            <span>{ESTADO_LABELS[estado]}</span>
+          {/* Filas de tareas */}
+          {data.tareas.map(tarea => (
+            <div key={tarea.id} className="gantt-row">
+              {/* Columna de nombre */}
+              <div className="gantt-row-label">
+                <div className="gantt-row-task-name" title={tarea.titulo}>
+                  {tarea.titulo}
+                </div>
+                <div className="gantt-row-assignee">{tarea.asignadoNombre}</div>
+              </div>
+
+              {/* Celdas del calendario + barra */}
+              <div className="gantt-row-cells">
+                {/* Celdas de fondo (para columnas de días) */}
+                {dias.map((d, i) => (
+                  <div
+                    key={i}
+                    className={`gantt-cell${esFinDeSemana(d) ? ' weekend' : ''}`}
+                  />
+                ))}
+
+                {/* Barra de la tarea */}
+                <div
+                  className={`gantt-bar ${tarea.estado}`}
+                  style={{
+                    left: `${calcBarLeft(tarea.fechaInicio)}%`,
+                    width: `${calcBarWidth(tarea.fechaInicio, tarea.fechaFin)}%`,
+                  }}
+                  title={`${tarea.titulo} — ${ESTADO_LABELS[tarea.estado]} — ${tarea.fechaInicio} / ${tarea.fechaFin}`}
+                >
+                  {tarea.titulo}
+                </div>
+
+                {/* Línea de hoy */}
+                {todayOffset !== null && (
+                  <div
+                    className="gantt-today-line"
+                    style={{ left: `${todayOffset}%` }}
+                    title="Hoy"
+                  />
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Leyenda */}
+        <div className="gantt-legend">
+          {Object.entries(LEGEND_COLORS).map(([estado, color]) => (
+            <div key={estado} className="gantt-legend-item">
+              <div className="gantt-legend-dot" style={{ background: color }} />
+              <span>{ESTADO_LABELS[estado]}</span>
+            </div>
+          ))}
+          <div className="gantt-legend-item">
+            <div className="gantt-legend-dot" style={{ background: '#ef4444', width: 3, borderRadius: 1 }} />
+            <span>Hoy</span>
           </div>
-        ))}
-        <div className="gantt-legend-item">
-          <div className="gantt-legend-dot" style={{ background: '#ef4444', width: 3, borderRadius: 1 }} />
-          <span>Hoy</span>
         </div>
       </div>
     </div>

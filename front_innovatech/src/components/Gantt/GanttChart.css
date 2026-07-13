@@ -17,6 +17,27 @@
   gap: 0.5rem;
 }
 
+.gantt-download-btn {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  background: #f5f3ff;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.gantt-download-btn:hover {
+  background: #ede9fe;
+}
+
 .gantt-table-wrapper {
   min-width: 700px;
   position: relative;

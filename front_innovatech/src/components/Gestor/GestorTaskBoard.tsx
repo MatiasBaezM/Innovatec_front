@@ -199,6 +199,13 @@ const GestorTaskBoard: React.FC = () => {
       setTaskForm(prev => ({ ...prev, asignadoId: Number(value), asignadoNombre: colab?.nombre ?? '' }));
     } else if (name === 'horasEstimadas') {
       setTaskForm(prev => ({ ...prev, horasEstimadas: Number(value) }));
+    } else if (name === 'fechaCreacion') {
+      // Si la fecha límite ya elegida queda antes del nuevo inicio, se limpia para forzar a re-elegirla
+      setTaskForm(prev => ({
+        ...prev,
+        fechaCreacion: value,
+        fechaLimite: prev.fechaLimite && prev.fechaLimite < value ? '' : prev.fechaLimite,
+      }));
     } else {
       setTaskForm(prev => ({ ...prev, [name]: value }));
     }
@@ -208,6 +215,10 @@ const GestorTaskBoard: React.FC = () => {
     e.preventDefault();
     if (!taskForm.asignadoId) {
       setTaskMsg({ type: 'danger', text: 'Debes seleccionar un colaborador.' });
+      return;
+    }
+    if (taskForm.fechaLimite && taskForm.fechaLimite < taskForm.fechaCreacion) {
+      setTaskMsg({ type: 'danger', text: 'La fecha de término no puede ser anterior a la fecha de inicio.' });
       return;
     }
     setTaskLoading(true);
@@ -530,13 +541,13 @@ const GestorTaskBoard: React.FC = () => {
             <Row className="g-3 mb-3">
               <Col sm={6}>
                 <Form.Group>
-                  <Form.Label>Fecha de inicio</Form.Label>
+                  <Form.Label>Fecha de inicio <span className="text-danger">*</span></Form.Label>
                   <Form.Control
                     type="date"
                     name="fechaCreacion"
                     value={taskForm.fechaCreacion}
-                    readOnly
-                    style={{ background: '#f8fafc', cursor: 'default' }}
+                    onChange={handleTaskFormChange}
+                    required
                   />
                 </Form.Group>
               </Col>

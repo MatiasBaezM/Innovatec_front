@@ -3,6 +3,7 @@ import { Table, Button, Modal, Form, Alert, Badge, Card } from 'react-bootstrap'
 import { Pencil, Trash2, Plus, Users, ClipboardList, ChevronLeft, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { API_ENDPOINTS } from '../../config/api';
 import API_BASE_URL from '../../config/api';
+import GanttChart from '../Gantt/GanttChart';
 import './ProjectsManagement.css';
 
 interface Colaborador {
@@ -308,6 +309,13 @@ const ProjectsManagement: React.FC = () => {
       setNewTask(prev => ({ ...prev, asignadoId: Number(value), asignadoNombre: user?.nombre ?? '' }));
     } else if (name === 'horasEstimadas') {
       setNewTask(prev => ({ ...prev, horasEstimadas: Number(value) }));
+    } else if (name === 'fechaCreacion') {
+      // Si la fecha límite ya elegida queda antes del nuevo inicio, se limpia para forzar a re-elegirla
+      setNewTask(prev => ({
+        ...prev,
+        fechaCreacion: value,
+        fechaLimite: prev.fechaLimite && prev.fechaLimite < value ? '' : prev.fechaLimite,
+      }));
     } else {
       setNewTask(prev => ({ ...prev, [name]: value }));
     }
@@ -317,6 +325,9 @@ const ProjectsManagement: React.FC = () => {
     e.preventDefault();
     if (!newTask.asignadoId) {
       setTaskMessage({ type: 'danger', text: 'Debes seleccionar un usuario a cargo.' }); return;
+    }
+    if (newTask.fechaLimite && newTask.fechaLimite < newTask.fechaCreacion) {
+      setTaskMessage({ type: 'danger', text: 'La fecha de término no puede ser anterior a la fecha de inicio.' }); return;
     }
     setTaskLoading(true);
     setTaskMessage({ type: '', text: '' });
@@ -652,6 +663,10 @@ const ProjectsManagement: React.FC = () => {
                   })}
                 </div>
               )}
+
+              {tasksProject?.id != null && (
+                <GanttChart proyectoId={tasksProject.id} nombreProyecto={tasksProject.nombre} />
+              )}
             </>
           )}
 
@@ -681,10 +696,10 @@ const ProjectsManagement: React.FC = () => {
                 </div>
                 <div className="col-sm-6">
                   <Form.Group>
-                    <Form.Label>Fecha de creación</Form.Label>
+                    <Form.Label>Fecha de inicio <span className="text-danger">*</span></Form.Label>
                     <Form.Control
                       type="date" name="fechaCreacion" value={newTask.fechaCreacion}
-                      onChange={handleTaskChange} className="modal-input" readOnly
+                      onChange={handleTaskChange} required className="modal-input"
                     />
                   </Form.Group>
                 </div>
